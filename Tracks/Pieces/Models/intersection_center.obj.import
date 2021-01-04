@@ -1,0 +1,19 @@
+[remap]
+
+importer="wavefront_obj"
+type="Mesh"
+path="res://.import/intersection_center.obj-e564026170557f0de420c302d2838415.mesh"
+
+[deps]
+
+files=[ "res://.import/intersection_center.obj-e564026170557f0de420c302d2838415.mesh" ]
+
+source_file="res://Tracks/Pieces/Models/intersection_center.obj"
+dest_files=[ "res://.import/intersection_center.obj-e564026170557f0de420c302d2838415.mesh", "res://.import/intersection_center.obj-e564026170557f0de420c302d2838415.mesh" ]
+
+[params]
+
+generate_tangents=true
+scale_mesh=Vector3( 1, 1, 1 )
+offset_mesh=Vector3( 0, 0, 0 )
+optimize_mesh=true
