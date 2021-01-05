@@ -2,8 +2,8 @@
 
 importer="texture"
 type="StreamTexture"
-path.s3tc="res://.import/scuffed-plastic-normal.png-5493b2afb84a597867d2c4a3b197767d.s3tc.stex"
-path.etc2="res://.import/scuffed-plastic-normal.png-5493b2afb84a597867d2c4a3b197767d.etc2.stex"
+path.s3tc="res://.import/floor_ao.jpg-1bd410dea167122ae71b7f986a4bfea3.s3tc.stex"
+path.etc2="res://.import/floor_ao.jpg-1bd410dea167122ae71b7f986a4bfea3.etc2.stex"
 metadata={
 "imported_formats": [ "s3tc", "etc2" ],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://Car/EpoxyplateMat/scuffed-plastic-normal.png"
-dest_files=[ "res://.import/scuffed-plastic-normal.png-5493b2afb84a597867d2c4a3b197767d.s3tc.stex", "res://.import/scuffed-plastic-normal.png-5493b2afb84a597867d2c4a3b197767d.etc2.stex" ]
+source_file="res://root/mat_floor/floor_ao.jpg"
+dest_files=[ "res://.import/floor_ao.jpg-1bd410dea167122ae71b7f986a4bfea3.s3tc.stex", "res://.import/floor_ao.jpg-1bd410dea167122ae71b7f986a4bfea3.etc2.stex" ]
 
 [params]
 
@@ -20,7 +20,7 @@ compress/mode=2
 compress/lossy_quality=0.7
 compress/hdr_mode=0
 compress/bptc_ldr=0
-compress/normal_map=1
+compress/normal_map=0
 flags/repeat=true
 flags/filter=true
 flags/mipmaps=true

@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/tco-sim-icon.png-b9ab92d4d17e8c149aa668ac9d4e4a6a.stex"
+path="res://.import/sim_icon.png-f57cb78e7377ce94e2d5ec3bb661b07e.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://tco-sim-icon.png"
-dest_files=[ "res://.import/tco-sim-icon.png-b9ab92d4d17e8c149aa668ac9d4e4a6a.stex" ]
+source_file="res://sim_icon.png"
+dest_files=[ "res://.import/sim_icon.png-f57cb78e7377ce94e2d5ec3bb661b07e.stex" ]
 
 [params]
 

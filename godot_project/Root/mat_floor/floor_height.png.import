@@ -2,8 +2,8 @@
 
 importer="texture"
 type="StreamTexture"
-path.s3tc="res://.import/scuffed-plastic-ao.png-72b8cba04d2276deb28a33bddc03c370.s3tc.stex"
-path.etc2="res://.import/scuffed-plastic-ao.png-72b8cba04d2276deb28a33bddc03c370.etc2.stex"
+path.s3tc="res://.import/floor_height.png-857268aac250e1b7a4bc770013fde24f.s3tc.stex"
+path.etc2="res://.import/floor_height.png-857268aac250e1b7a4bc770013fde24f.etc2.stex"
 metadata={
 "imported_formats": [ "s3tc", "etc2" ],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://Car/EpoxyplateMat/scuffed-plastic-ao.png"
-dest_files=[ "res://.import/scuffed-plastic-ao.png-72b8cba04d2276deb28a33bddc03c370.s3tc.stex", "res://.import/scuffed-plastic-ao.png-72b8cba04d2276deb28a33bddc03c370.etc2.stex" ]
+source_file="res://root/mat_floor/floor_height.png"
+dest_files=[ "res://.import/floor_height.png-857268aac250e1b7a4bc770013fde24f.s3tc.stex", "res://.import/floor_height.png-857268aac250e1b7a4bc770013fde24f.etc2.stex" ]
 
 [params]
 

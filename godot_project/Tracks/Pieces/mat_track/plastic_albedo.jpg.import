@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/colorful_studio.jpg-c609579776d3607c5258d5ede4d8c321.stex"
+path="res://.import/plastic_albedo.jpg-55614ca02acdbba52bf403566324bea1.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://environment/colorful_studio.jpg"
-dest_files=[ "res://.import/colorful_studio.jpg-c609579776d3607c5258d5ede4d8c321.stex" ]
+source_file="res://tracks/pieces/mat_track/plastic_albedo.jpg"
+dest_files=[ "res://.import/plastic_albedo.jpg-55614ca02acdbba52bf403566324bea1.stex" ]
 
 [params]
 

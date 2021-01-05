@@ -16,8 +16,8 @@ _global_script_class_icons={
 [application]
 
 config/name="tco-sim"
-run/main_scene="res://Root/Root.tscn"
-config/icon="res://tco-sim-icon.png"
+run/main_scene="res://root/root.tscn"
+config/icon="res://sim_icon.png"
 
 [input]
 

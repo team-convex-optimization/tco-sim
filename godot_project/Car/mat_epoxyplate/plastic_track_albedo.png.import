@@ -2,8 +2,8 @@
 
 importer="texture"
 type="StreamTexture"
-path.s3tc="res://.import/scuffed-plastic-metal.png-a1e420060cf6123f8366ad3b97accfb6.s3tc.stex"
-path.etc2="res://.import/scuffed-plastic-metal.png-a1e420060cf6123f8366ad3b97accfb6.etc2.stex"
+path.s3tc="res://.import/plastic_track_albedo.png-8ec631a122379b615204d1119b953b3e.s3tc.stex"
+path.etc2="res://.import/plastic_track_albedo.png-8ec631a122379b615204d1119b953b3e.etc2.stex"
 metadata={
 "imported_formats": [ "s3tc", "etc2" ],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://Car/EpoxyplateMat/scuffed-plastic-metal.png"
-dest_files=[ "res://.import/scuffed-plastic-metal.png-a1e420060cf6123f8366ad3b97accfb6.s3tc.stex", "res://.import/scuffed-plastic-metal.png-a1e420060cf6123f8366ad3b97accfb6.etc2.stex" ]
+source_file="res://car/mat_epoxyplate/plastic_track_albedo.png"
+dest_files=[ "res://.import/plastic_track_albedo.png-8ec631a122379b615204d1119b953b3e.s3tc.stex", "res://.import/plastic_track_albedo.png-8ec631a122379b615204d1119b953b3e.etc2.stex" ]
 
 [params]
 
@@ -25,7 +25,7 @@ flags/repeat=true
 flags/filter=true
 flags/mipmaps=true
 flags/anisotropic=false
-flags/srgb=2
+flags/srgb=1
 process/fix_alpha_border=true
 process/premult_alpha=false
 process/HDR_as_SRGB=false

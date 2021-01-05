@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/convex-optimization-sim-logo.svg-8413e15039c8cb4fc78e583f315ef1eb.stex"
+path="res://.import/sim_logo.svg-2a7b3703e64f231195a7fd5c908809a0.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://convex-optimization-sim-logo.svg"
-dest_files=[ "res://.import/convex-optimization-sim-logo.svg-8413e15039c8cb4fc78e583f315ef1eb.stex" ]
+source_file="res://sim_logo.svg"
+dest_files=[ "res://.import/sim_logo.svg-2a7b3703e64f231195a7fd5c908809a0.stex" ]
 
 [params]
 

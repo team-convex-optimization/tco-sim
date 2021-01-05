@@ -2,8 +2,8 @@
 
 importer="texture"
 type="StreamTexture"
-path.s3tc="res://.import/rubber_baseColor.png-354b95a1616d40e2df17ca15eff68a8e.s3tc.stex"
-path.etc2="res://.import/rubber_baseColor.png-354b95a1616d40e2df17ca15eff68a8e.etc2.stex"
+path.s3tc="res://.import/plastic_track_roughness.png-cd7e726c6a551c3ffdbbef65e92314cb.s3tc.stex"
+path.etc2="res://.import/plastic_track_roughness.png-cd7e726c6a551c3ffdbbef65e92314cb.etc2.stex"
 metadata={
 "imported_formats": [ "s3tc", "etc2" ],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://Car/RubberMat/rubber_baseColor.png"
-dest_files=[ "res://.import/rubber_baseColor.png-354b95a1616d40e2df17ca15eff68a8e.s3tc.stex", "res://.import/rubber_baseColor.png-354b95a1616d40e2df17ca15eff68a8e.etc2.stex" ]
+source_file="res://car/mat_epoxyplate/plastic_track_roughness.png"
+dest_files=[ "res://.import/plastic_track_roughness.png-cd7e726c6a551c3ffdbbef65e92314cb.s3tc.stex", "res://.import/plastic_track_roughness.png-cd7e726c6a551c3ffdbbef65e92314cb.etc2.stex" ]
 
 [params]
 
@@ -25,7 +25,7 @@ flags/repeat=true
 flags/filter=true
 flags/mipmaps=true
 flags/anisotropic=false
-flags/srgb=1
+flags/srgb=2
 process/fix_alpha_border=true
 process/premult_alpha=false
 process/HDR_as_SRGB=false

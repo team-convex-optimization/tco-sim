@@ -2,8 +2,8 @@
 
 importer="texture"
 type="StreamTexture"
-path.s3tc="res://.import/Plastic010_1K_Color.jpg-161ff718d9ae242561343beeb7f91e6e.s3tc.stex"
-path.etc2="res://.import/Plastic010_1K_Color.jpg-161ff718d9ae242561343beeb7f91e6e.etc2.stex"
+path.s3tc="res://.import/plastic_track_ao.png-e1ec389a35626cc8eaa9b774f4e377b7.s3tc.stex"
+path.etc2="res://.import/plastic_track_ao.png-e1ec389a35626cc8eaa9b774f4e377b7.etc2.stex"
 metadata={
 "imported_formats": [ "s3tc", "etc2" ],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://Tracks/Pieces/TrackTexture/Plastic010_1K_Color.jpg"
-dest_files=[ "res://.import/Plastic010_1K_Color.jpg-161ff718d9ae242561343beeb7f91e6e.s3tc.stex", "res://.import/Plastic010_1K_Color.jpg-161ff718d9ae242561343beeb7f91e6e.etc2.stex" ]
+source_file="res://car/mat_epoxyplate/plastic_track_ao.png"
+dest_files=[ "res://.import/plastic_track_ao.png-e1ec389a35626cc8eaa9b774f4e377b7.s3tc.stex", "res://.import/plastic_track_ao.png-e1ec389a35626cc8eaa9b774f4e377b7.etc2.stex" ]
 
 [params]
 
@@ -25,7 +25,7 @@ flags/repeat=true
 flags/filter=true
 flags/mipmaps=true
 flags/anisotropic=false
-flags/srgb=1
+flags/srgb=2
 process/fix_alpha_border=true
 process/premult_alpha=false
 process/HDR_as_SRGB=false

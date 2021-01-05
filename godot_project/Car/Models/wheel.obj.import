@@ -2,14 +2,14 @@
 
 importer="wavefront_obj"
 type="Mesh"
-path="res://.import/wheel.obj-0666a400f2d0881bbb2711c35236ceb5.mesh"
+path="res://.import/wheel.obj-4fb41a3a51362a0a130ea922e71afd21.mesh"
 
 [deps]
 
-files=[ "res://.import/wheel.obj-0666a400f2d0881bbb2711c35236ceb5.mesh" ]
+files=[ "res://.import/wheel.obj-4fb41a3a51362a0a130ea922e71afd21.mesh" ]
 
-source_file="res://Car/Models/wheel.obj"
-dest_files=[ "res://.import/wheel.obj-0666a400f2d0881bbb2711c35236ceb5.mesh", "res://.import/wheel.obj-0666a400f2d0881bbb2711c35236ceb5.mesh" ]
+source_file="res://car/models/wheel.obj"
+dest_files=[ "res://.import/wheel.obj-4fb41a3a51362a0a130ea922e71afd21.mesh", "res://.import/wheel.obj-4fb41a3a51362a0a130ea922e71afd21.mesh" ]
 
 [params]
 

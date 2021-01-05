@@ -2,8 +2,8 @@
 
 importer="texture"
 type="StreamTexture"
-path.s3tc="res://.import/rubber_metallic.png-8f28362699df8a462c4cb2e55e8489ee.s3tc.stex"
-path.etc2="res://.import/rubber_metallic.png-8f28362699df8a462c4cb2e55e8489ee.etc2.stex"
+path.s3tc="res://.import/plastic_normal.jpg-782a035157885c4082f85af06dddd7d3.s3tc.stex"
+path.etc2="res://.import/plastic_normal.jpg-782a035157885c4082f85af06dddd7d3.etc2.stex"
 metadata={
 "imported_formats": [ "s3tc", "etc2" ],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://Car/RubberMat/rubber_metallic.png"
-dest_files=[ "res://.import/rubber_metallic.png-8f28362699df8a462c4cb2e55e8489ee.s3tc.stex", "res://.import/rubber_metallic.png-8f28362699df8a462c4cb2e55e8489ee.etc2.stex" ]
+source_file="res://tracks/pieces/mat_track/plastic_normal.jpg"
+dest_files=[ "res://.import/plastic_normal.jpg-782a035157885c4082f85af06dddd7d3.s3tc.stex", "res://.import/plastic_normal.jpg-782a035157885c4082f85af06dddd7d3.etc2.stex" ]
 
 [params]
 
@@ -20,7 +20,7 @@ compress/mode=2
 compress/lossy_quality=0.7
 compress/hdr_mode=0
 compress/bptc_ldr=0
-compress/normal_map=0
+compress/normal_map=1
 flags/repeat=true
 flags/filter=true
 flags/mipmaps=true
