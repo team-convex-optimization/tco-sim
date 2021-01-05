@@ -25,27 +25,40 @@ const servo_weight = 0.045 #kg
 
 #================ STATE VARS =====================#
 var motor_V = 0
-var servo_V = 0
+var servo_angle = 0
 
 #================ RUNTIME METHODS ================#
 
 func input_get():
+	servo_angle = 0
+	motor_V = 0
 	if Input.is_action_pressed("steer_left"):
-		servo_V = -servo_max_voltage
-	elif Input.is_action_pressed("steer_right"):
-		servo_V = servo_max_voltage
-	else:
-		servo_V = 0
+		servo_angle += -1
+	if Input.is_action_pressed("steer_right"):
+		servo_angle += 1
 		
-	if Input.is_action_pressed("motor_accelerate"):
+	if Input.is_action_pressed("accelerate"):
 		motor_V = motor_max_V
 		if motor_V < motor_max_V:
-			motor_V += 0.2
-	elif Input.is_action_pressed("motor_decelerate"):
+			motor_V += 1
+	if Input.is_action_pressed("decelerate"):
 		if motor_V > -motor_max_V:
-			motor_V -= 0.2
-	else:
-		motor_V = 0 #OFF
+			motor_V -= 1
+		
+	if Input.is_action_pressed("joy_steer_left"):
+		servo_angle += -Input.get_action_strength("joy_steer_left")
+	if Input.is_action_pressed("joy_steer_right"):
+		servo_angle += Input.get_action_strength("joy_steer_right")
+	if abs(servo_angle) < 0.05: #will be ignored in ml
+		servo_angle = 0
+		
+	if Input.is_action_pressed("joy_accelerate"):
+		motor_V = Input.get_action_strength("joy_accelerate") * motor_max_V
+	if Input.is_action_pressed("joy_deccelerate"):
+		motor_V -= Input.get_action_strength("joy_deccelerate") * motor_max_V
+		
+	servo_angle = -clamp(servo_angle, -0.5, 0.5)
+	motor_V = clamp(motor_V, -motor_max_V, motor_max_V)
 
 
 func _ready():
@@ -57,21 +70,18 @@ func _physics_process(delta):
 	var amp = get_motor_current(motor_V, motor_resistance)
 	var torque = get_motor_torque(amp, motor_KV)
 	var rpm = motor_V * motor_KV
-	print_debug("V\t", motor_V)
-	print_debug("A\t", amp)
-	print_debug("T\t", torque)
-	print_debug("RPM\t", rpm)
+	#print_debug("V\t", motor_V)
+	#print_debug("A\t", amp)
+	#print_debug("T\t", torque)
+	#print_debug("RPM\t", rpm)
+	#print_debug("FLRPM\t", get_node("CarWheelFL").get_rpm()*1.8)
+	print_debug("servo angle\t",servo_angle)
 	
-	if servo_V > 0:
-		set_steering(-0.5)
-	elif servo_V < 0:
-		set_steering(0.5)
-	else:
-		set_steering(0)
+	set_steering(servo_angle)
 	
 	if motor_V > 0:
-		set_engine_force((torque/0.07)) #force is (torque/moment) * gear ratio
+		set_engine_force((torque/0.07)/1.8) #force is (torque/moment) * gear ratio
 	elif motor_V < 0:
-		set_engine_force((torque/0.07))
+		set_engine_force((torque/0.07)/1.8)
 	else:
 		set_engine_force(0)
