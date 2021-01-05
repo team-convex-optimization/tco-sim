@@ -24,4 +24,4 @@ depth_deep_parallax = false
 depth_flip_tangent = false
 depth_flip_binormal = false
 depth_texture = ExtResource( 1 )
-uv1_scale = Vector3( 10, 10, 1 )
+uv1_scale = Vector3( 70, 50, 1 )
