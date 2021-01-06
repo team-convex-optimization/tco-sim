@@ -39,11 +39,8 @@ func input_get():
 		
 	if Input.is_action_pressed("accelerate"):
 		motor_V = motor_max_V
-		if motor_V < motor_max_V:
-			motor_V += 1
 	if Input.is_action_pressed("decelerate"):
-		if motor_V > -motor_max_V:
-			motor_V -= 1
+		motor_V -= motor_max_V
 		
 	if Input.is_action_pressed("joy_steer_left"):
 		servo_angle += -Input.get_action_strength("joy_steer_left")
@@ -78,10 +75,5 @@ func _physics_process(delta):
 	#print_debug("servo angle\t",servo_angle)
 	
 	set_steering(servo_angle)
+	set_engine_force((torque/0.0325)/1.8) #force is (torque/moment) 
 	
-	if motor_V > 0:
-		set_engine_force((torque/0.07)) #force is (torque/moment) 
-	elif motor_V < 0:
-		set_engine_force((torque/0.07))
-	else:
-		set_engine_force(0)
