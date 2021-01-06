@@ -2,8 +2,8 @@
 
 importer="texture"
 type="StreamTexture"
-path.s3tc="res://.import/floor_roughness.jpg-b4571f7dd17265c7cb66fd18bd5d83aa.s3tc.stex"
-path.etc2="res://.import/floor_roughness.jpg-b4571f7dd17265c7cb66fd18bd5d83aa.etc2.stex"
+path.s3tc="res://.import/floor_roughness.jpg-9a235d4c0ddb5f0a4a1304b60f9b1df4.s3tc.stex"
+path.etc2="res://.import/floor_roughness.jpg-9a235d4c0ddb5f0a4a1304b60f9b1df4.etc2.stex"
 metadata={
 "imported_formats": [ "s3tc", "etc2" ],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://Root/mat_floor/floor_roughness.jpg"
-dest_files=[ "res://.import/floor_roughness.jpg-b4571f7dd17265c7cb66fd18bd5d83aa.s3tc.stex", "res://.import/floor_roughness.jpg-b4571f7dd17265c7cb66fd18bd5d83aa.etc2.stex" ]
+source_file="res://root/mat_floor/floor_roughness.jpg"
+dest_files=[ "res://.import/floor_roughness.jpg-9a235d4c0ddb5f0a4a1304b60f9b1df4.s3tc.stex", "res://.import/floor_roughness.jpg-9a235d4c0ddb5f0a4a1304b60f9b1df4.etc2.stex" ]
 
 [params]
 

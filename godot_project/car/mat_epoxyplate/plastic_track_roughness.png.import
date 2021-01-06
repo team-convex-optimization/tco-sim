@@ -2,8 +2,8 @@
 
 importer="texture"
 type="StreamTexture"
-path.s3tc="res://.import/plastic_track_roughness.png-1d035a6c18fb978263bee5d8b4027d2e.s3tc.stex"
-path.etc2="res://.import/plastic_track_roughness.png-1d035a6c18fb978263bee5d8b4027d2e.etc2.stex"
+path.s3tc="res://.import/plastic_track_roughness.png-cd7e726c6a551c3ffdbbef65e92314cb.s3tc.stex"
+path.etc2="res://.import/plastic_track_roughness.png-cd7e726c6a551c3ffdbbef65e92314cb.etc2.stex"
 metadata={
 "imported_formats": [ "s3tc", "etc2" ],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://Car/mat_epoxyplate/plastic_track_roughness.png"
-dest_files=[ "res://.import/plastic_track_roughness.png-1d035a6c18fb978263bee5d8b4027d2e.s3tc.stex", "res://.import/plastic_track_roughness.png-1d035a6c18fb978263bee5d8b4027d2e.etc2.stex" ]
+source_file="res://car/mat_epoxyplate/plastic_track_roughness.png"
+dest_files=[ "res://.import/plastic_track_roughness.png-cd7e726c6a551c3ffdbbef65e92314cb.s3tc.stex", "res://.import/plastic_track_roughness.png-cd7e726c6a551c3ffdbbef65e92314cb.etc2.stex" ]
 
 [params]
 

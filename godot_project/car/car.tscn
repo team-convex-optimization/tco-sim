@@ -1,12 +1,12 @@
 [gd_scene load_steps=9 format=2]
 
-[ext_resource path="res://Car/car_controller.gd" type="Script" id=1]
-[ext_resource path="res://Car/Models/wheel.obj" type="ArrayMesh" id=2]
-[ext_resource path="res://Car/Models/base_short.obj" type="ArrayMesh" id=3]
-[ext_resource path="res://Car/Models/assembly_camera_mount_manual.obj" type="ArrayMesh" id=4]
-[ext_resource path="res://Car/Models/rod.obj" type="ArrayMesh" id=5]
-[ext_resource path="res://Car/mat_epoxyplate/mat_epoxyplate.tres" type="Material" id=6]
-[ext_resource path="res://Car/mat_rubber/mat_rubber.tres" type="Material" id=7]
+[ext_resource path="res://car/car_controller.gd" type="Script" id=1]
+[ext_resource path="res://car/models/wheel.obj" type="ArrayMesh" id=2]
+[ext_resource path="res://car/models/base_short.obj" type="ArrayMesh" id=3]
+[ext_resource path="res://car/models/assembly_camera_mount_manual.obj" type="ArrayMesh" id=4]
+[ext_resource path="res://car/models/rod.obj" type="ArrayMesh" id=5]
+[ext_resource path="res://car/mat_epoxyplate/mat_epoxyplate.tres" type="Material" id=6]
+[ext_resource path="res://car/mat_rubber/mat_rubber.tres" type="Material" id=7]
 
 [sub_resource type="BoxShape" id=1]
 margin = 0.5

@@ -1,6 +1,7 @@
 [gd_resource type="Environment" load_steps=3 format=2]
 
-[ext_resource path="res://Environment/colorful_studio.jpg" type="Texture" id=1]
+[ext_resource path="res://environment/colorful_studio.jpg" type="Texture" id=1]
+
 
 
 

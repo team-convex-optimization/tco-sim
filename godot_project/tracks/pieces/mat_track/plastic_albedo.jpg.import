@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/plastic_albedo.jpg-116651f0b692bf83892fe291dad717aa.stex"
+path="res://.import/plastic_albedo.jpg-55614ca02acdbba52bf403566324bea1.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Tracks/Pieces/mat_track/plastic_albedo.jpg"
-dest_files=[ "res://.import/plastic_albedo.jpg-116651f0b692bf83892fe291dad717aa.stex" ]
+source_file="res://tracks/pieces/mat_track/plastic_albedo.jpg"
+dest_files=[ "res://.import/plastic_albedo.jpg-55614ca02acdbba52bf403566324bea1.stex" ]
 
 [params]
 

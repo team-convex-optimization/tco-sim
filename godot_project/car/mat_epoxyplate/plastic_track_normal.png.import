@@ -2,8 +2,8 @@
 
 importer="texture"
 type="StreamTexture"
-path.s3tc="res://.import/plastic_track_normal.png-64b79110fd906853295057af786a8637.s3tc.stex"
-path.etc2="res://.import/plastic_track_normal.png-64b79110fd906853295057af786a8637.etc2.stex"
+path.s3tc="res://.import/plastic_track_normal.png-e89991f990cafe2d29f0ea85f4897059.s3tc.stex"
+path.etc2="res://.import/plastic_track_normal.png-e89991f990cafe2d29f0ea85f4897059.etc2.stex"
 metadata={
 "imported_formats": [ "s3tc", "etc2" ],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://Car/mat_epoxyplate/plastic_track_normal.png"
-dest_files=[ "res://.import/plastic_track_normal.png-64b79110fd906853295057af786a8637.s3tc.stex", "res://.import/plastic_track_normal.png-64b79110fd906853295057af786a8637.etc2.stex" ]
+source_file="res://car/mat_epoxyplate/plastic_track_normal.png"
+dest_files=[ "res://.import/plastic_track_normal.png-e89991f990cafe2d29f0ea85f4897059.s3tc.stex", "res://.import/plastic_track_normal.png-e89991f990cafe2d29f0ea85f4897059.etc2.stex" ]
 
 [params]
 

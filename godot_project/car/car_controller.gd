@@ -66,7 +66,7 @@ func _physics_process(delta):
 	
 	var amp = get_motor_current(motor_V, motor_resistance)
 	var torque = get_motor_torque(amp, motor_KV)
-	var rpm = motor_V * motor_KV
+	#var rpm = motor_V * motor_KV
 	#print_debug("V\t", motor_V)
 	#print_debug("A\t", amp)
 	#print_debug("T\t", torque)

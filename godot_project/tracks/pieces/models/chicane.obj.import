@@ -2,14 +2,14 @@
 
 importer="wavefront_obj"
 type="Mesh"
-path="res://.import/chicane.obj-723ea3bda1a5e8fbc457409f2a40f1d9.mesh"
+path="res://.import/chicane.obj-4e63c35169144a596c66b03ce3126bec.mesh"
 
 [deps]
 
-files=[ "res://.import/chicane.obj-723ea3bda1a5e8fbc457409f2a40f1d9.mesh" ]
+files=[ "res://.import/chicane.obj-4e63c35169144a596c66b03ce3126bec.mesh" ]
 
-source_file="res://Tracks/Pieces/Models/chicane.obj"
-dest_files=[ "res://.import/chicane.obj-723ea3bda1a5e8fbc457409f2a40f1d9.mesh", "res://.import/chicane.obj-723ea3bda1a5e8fbc457409f2a40f1d9.mesh" ]
+source_file="res://tracks/pieces/models/chicane.obj"
+dest_files=[ "res://.import/chicane.obj-4e63c35169144a596c66b03ce3126bec.mesh", "res://.import/chicane.obj-4e63c35169144a596c66b03ce3126bec.mesh" ]
 
 [params]
 

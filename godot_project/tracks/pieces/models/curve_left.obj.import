@@ -2,14 +2,14 @@
 
 importer="wavefront_obj"
 type="Mesh"
-path="res://.import/curve_left.obj-94f10221f4d3957932fd2317c3695f6b.mesh"
+path="res://.import/curve_left.obj-e1332868473def274782163d5278add3.mesh"
 
 [deps]
 
-files=[ "res://.import/curve_left.obj-94f10221f4d3957932fd2317c3695f6b.mesh" ]
+files=[ "res://.import/curve_left.obj-e1332868473def274782163d5278add3.mesh" ]
 
-source_file="res://Tracks/Pieces/Models/curve_left.obj"
-dest_files=[ "res://.import/curve_left.obj-94f10221f4d3957932fd2317c3695f6b.mesh", "res://.import/curve_left.obj-94f10221f4d3957932fd2317c3695f6b.mesh" ]
+source_file="res://tracks/pieces/models/curve_left.obj"
+dest_files=[ "res://.import/curve_left.obj-e1332868473def274782163d5278add3.mesh", "res://.import/curve_left.obj-e1332868473def274782163d5278add3.mesh" ]
 
 [params]
 

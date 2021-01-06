@@ -1,6 +1,7 @@
 [gd_scene load_steps=3 format=2]
 
-[ext_resource path="res://Tracks/Pieces/Models/straight.obj" type="ArrayMesh" id=1]
+[ext_resource path="res://tracks/pieces/models/straight.obj" type="ArrayMesh" id=1]
+
 
 
 
