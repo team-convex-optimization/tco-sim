@@ -75,13 +75,13 @@ func _physics_process(delta):
 	#print_debug("T\t", torque)
 	#print_debug("RPM\t", rpm)
 	#print_debug("FLRPM\t", get_node("CarWheelFL").get_rpm()*1.8)
-	print_debug("servo angle\t",servo_angle)
+	#print_debug("servo angle\t",servo_angle)
 	
 	set_steering(servo_angle)
 	
 	if motor_V > 0:
-		set_engine_force((torque/0.07)/1.8) #force is (torque/moment) * gear ratio
+		set_engine_force((torque/0.07)) #force is (torque/moment) 
 	elif motor_V < 0:
-		set_engine_force((torque/0.07)/1.8)
+		set_engine_force((torque/0.07))
 	else:
 		set_engine_force(0)

@@ -2,8 +2,8 @@
 
 importer="texture"
 type="StreamTexture"
-path.s3tc="res://.import/rubber_metallic.png-b5282d369e8de4a325503a87d5b0b17a.s3tc.stex"
-path.etc2="res://.import/rubber_metallic.png-b5282d369e8de4a325503a87d5b0b17a.etc2.stex"
+path.s3tc="res://.import/rubber_metallic.png-0b4d25b64028a033e9ae1d6568ba52d0.s3tc.stex"
+path.etc2="res://.import/rubber_metallic.png-0b4d25b64028a033e9ae1d6568ba52d0.etc2.stex"
 metadata={
 "imported_formats": [ "s3tc", "etc2" ],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://car/mat_rubber/rubber_metallic.png"
-dest_files=[ "res://.import/rubber_metallic.png-b5282d369e8de4a325503a87d5b0b17a.s3tc.stex", "res://.import/rubber_metallic.png-b5282d369e8de4a325503a87d5b0b17a.etc2.stex" ]
+source_file="res://Car/mat_rubber/rubber_metallic.png"
+dest_files=[ "res://.import/rubber_metallic.png-0b4d25b64028a033e9ae1d6568ba52d0.s3tc.stex", "res://.import/rubber_metallic.png-0b4d25b64028a033e9ae1d6568ba52d0.etc2.stex" ]
 
 [params]
 

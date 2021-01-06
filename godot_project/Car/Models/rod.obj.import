@@ -2,14 +2,14 @@
 
 importer="wavefront_obj"
 type="Mesh"
-path="res://.import/rod.obj-5fa056fe4bcc0e5f0512b6e78e95d849.mesh"
+path="res://.import/rod.obj-69d7fca56e946a862fc2406e03174ba2.mesh"
 
 [deps]
 
-files=[ "res://.import/rod.obj-5fa056fe4bcc0e5f0512b6e78e95d849.mesh" ]
+files=[ "res://.import/rod.obj-69d7fca56e946a862fc2406e03174ba2.mesh" ]
 
-source_file="res://car/models/rod.obj"
-dest_files=[ "res://.import/rod.obj-5fa056fe4bcc0e5f0512b6e78e95d849.mesh", "res://.import/rod.obj-5fa056fe4bcc0e5f0512b6e78e95d849.mesh" ]
+source_file="res://Car/Models/rod.obj"
+dest_files=[ "res://.import/rod.obj-69d7fca56e946a862fc2406e03174ba2.mesh", "res://.import/rod.obj-69d7fca56e946a862fc2406e03174ba2.mesh" ]
 
 [params]
 

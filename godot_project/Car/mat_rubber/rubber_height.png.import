@@ -2,8 +2,8 @@
 
 importer="texture"
 type="StreamTexture"
-path.s3tc="res://.import/rubber_height.png-bd905978f17402e29702b3a3b320af34.s3tc.stex"
-path.etc2="res://.import/rubber_height.png-bd905978f17402e29702b3a3b320af34.etc2.stex"
+path.s3tc="res://.import/rubber_height.png-a40a4d928502958a3e4b1f0479eb8206.s3tc.stex"
+path.etc2="res://.import/rubber_height.png-a40a4d928502958a3e4b1f0479eb8206.etc2.stex"
 metadata={
 "imported_formats": [ "s3tc", "etc2" ],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://car/mat_rubber/rubber_height.png"
-dest_files=[ "res://.import/rubber_height.png-bd905978f17402e29702b3a3b320af34.s3tc.stex", "res://.import/rubber_height.png-bd905978f17402e29702b3a3b320af34.etc2.stex" ]
+source_file="res://Car/mat_rubber/rubber_height.png"
+dest_files=[ "res://.import/rubber_height.png-a40a4d928502958a3e4b1f0479eb8206.s3tc.stex", "res://.import/rubber_height.png-a40a4d928502958a3e4b1f0479eb8206.etc2.stex" ]
 
 [params]
 

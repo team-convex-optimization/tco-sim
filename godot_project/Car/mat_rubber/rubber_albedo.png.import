@@ -2,8 +2,8 @@
 
 importer="texture"
 type="StreamTexture"
-path.s3tc="res://.import/rubber_albedo.png-6b521ab1472a022b853c3f407637cec6.s3tc.stex"
-path.etc2="res://.import/rubber_albedo.png-6b521ab1472a022b853c3f407637cec6.etc2.stex"
+path.s3tc="res://.import/rubber_albedo.png-701e7660042ed0d4e8ddc7c3579b1e75.s3tc.stex"
+path.etc2="res://.import/rubber_albedo.png-701e7660042ed0d4e8ddc7c3579b1e75.etc2.stex"
 metadata={
 "imported_formats": [ "s3tc", "etc2" ],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://car/mat_rubber/rubber_albedo.png"
-dest_files=[ "res://.import/rubber_albedo.png-6b521ab1472a022b853c3f407637cec6.s3tc.stex", "res://.import/rubber_albedo.png-6b521ab1472a022b853c3f407637cec6.etc2.stex" ]
+source_file="res://Car/mat_rubber/rubber_albedo.png"
+dest_files=[ "res://.import/rubber_albedo.png-701e7660042ed0d4e8ddc7c3579b1e75.s3tc.stex", "res://.import/rubber_albedo.png-701e7660042ed0d4e8ddc7c3579b1e75.etc2.stex" ]
 
 [params]
 

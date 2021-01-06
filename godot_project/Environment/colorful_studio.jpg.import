@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/colorful_studio.jpg-c609579776d3607c5258d5ede4d8c321.stex"
+path="res://.import/colorful_studio.jpg-270a86810e86492693ea5bd5861fa03d.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://environment/colorful_studio.jpg"
-dest_files=[ "res://.import/colorful_studio.jpg-c609579776d3607c5258d5ede4d8c321.stex" ]
+source_file="res://Environment/colorful_studio.jpg"
+dest_files=[ "res://.import/colorful_studio.jpg-270a86810e86492693ea5bd5861fa03d.stex" ]
 
 [params]
 

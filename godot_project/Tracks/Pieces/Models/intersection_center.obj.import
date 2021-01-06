@@ -2,14 +2,14 @@
 
 importer="wavefront_obj"
 type="Mesh"
-path="res://.import/intersection_center.obj-7f60ba0b76c6e3445a29e8619945c980.mesh"
+path="res://.import/intersection_center.obj-e564026170557f0de420c302d2838415.mesh"
 
 [deps]
 
-files=[ "res://.import/intersection_center.obj-7f60ba0b76c6e3445a29e8619945c980.mesh" ]
+files=[ "res://.import/intersection_center.obj-e564026170557f0de420c302d2838415.mesh" ]
 
-source_file="res://tracks/pieces/models/intersection_center.obj"
-dest_files=[ "res://.import/intersection_center.obj-7f60ba0b76c6e3445a29e8619945c980.mesh", "res://.import/intersection_center.obj-7f60ba0b76c6e3445a29e8619945c980.mesh" ]
+source_file="res://Tracks/Pieces/Models/intersection_center.obj"
+dest_files=[ "res://.import/intersection_center.obj-e564026170557f0de420c302d2838415.mesh", "res://.import/intersection_center.obj-e564026170557f0de420c302d2838415.mesh" ]
 
 [params]
 

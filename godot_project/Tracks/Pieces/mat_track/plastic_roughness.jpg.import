@@ -2,8 +2,8 @@
 
 importer="texture"
 type="StreamTexture"
-path.s3tc="res://.import/plastic_roughness.jpg-f708f391ce46c8c2f85848bcb3731d93.s3tc.stex"
-path.etc2="res://.import/plastic_roughness.jpg-f708f391ce46c8c2f85848bcb3731d93.etc2.stex"
+path.s3tc="res://.import/plastic_roughness.jpg-2858cf94515a9b0a8bc8bd952796010d.s3tc.stex"
+path.etc2="res://.import/plastic_roughness.jpg-2858cf94515a9b0a8bc8bd952796010d.etc2.stex"
 metadata={
 "imported_formats": [ "s3tc", "etc2" ],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://tracks/pieces/mat_track/plastic_roughness.jpg"
-dest_files=[ "res://.import/plastic_roughness.jpg-f708f391ce46c8c2f85848bcb3731d93.s3tc.stex", "res://.import/plastic_roughness.jpg-f708f391ce46c8c2f85848bcb3731d93.etc2.stex" ]
+source_file="res://Tracks/Pieces/mat_track/plastic_roughness.jpg"
+dest_files=[ "res://.import/plastic_roughness.jpg-2858cf94515a9b0a8bc8bd952796010d.s3tc.stex", "res://.import/plastic_roughness.jpg-2858cf94515a9b0a8bc8bd952796010d.etc2.stex" ]
 
 [params]
 

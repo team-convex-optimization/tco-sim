@@ -2,14 +2,14 @@
 
 importer="wavefront_obj"
 type="Mesh"
-path="res://.import/assembly_camera_mount_manual.obj-61898f09888b3ca0cb3d2e7a473d7f0d.mesh"
+path="res://.import/assembly_camera_mount_manual.obj-34bbb14fc8c47b803d52bc9550c11ba9.mesh"
 
 [deps]
 
-files=[ "res://.import/assembly_camera_mount_manual.obj-61898f09888b3ca0cb3d2e7a473d7f0d.mesh" ]
+files=[ "res://.import/assembly_camera_mount_manual.obj-34bbb14fc8c47b803d52bc9550c11ba9.mesh" ]
 
-source_file="res://car/models/assembly_camera_mount_manual.obj"
-dest_files=[ "res://.import/assembly_camera_mount_manual.obj-61898f09888b3ca0cb3d2e7a473d7f0d.mesh", "res://.import/assembly_camera_mount_manual.obj-61898f09888b3ca0cb3d2e7a473d7f0d.mesh" ]
+source_file="res://Car/Models/assembly_camera_mount_manual.obj"
+dest_files=[ "res://.import/assembly_camera_mount_manual.obj-34bbb14fc8c47b803d52bc9550c11ba9.mesh", "res://.import/assembly_camera_mount_manual.obj-34bbb14fc8c47b803d52bc9550c11ba9.mesh" ]
 
 [params]
 

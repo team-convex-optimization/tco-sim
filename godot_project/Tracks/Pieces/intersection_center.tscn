@@ -2,6 +2,8 @@
 
 [ext_resource path="res://Tracks/Pieces/Models/intersection_center.obj" type="ArrayMesh" id=1]
 
+
+
 [node name="IntersectionCenter" type="Spatial"]
 
 [node name="MeshInstance" type="MeshInstance" parent="."]
