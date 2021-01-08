@@ -1,8 +1,9 @@
 [gd_scene load_steps=4 format=2]
 
-[ext_resource path="res://tracks/pieces/Straight.tscn" type="PackedScene" id=1]
+[ext_resource path="res://tracks/pieces/straight.tscn" type="PackedScene" id=1]
 [ext_resource path="res://tracks/pieces/curve_left.tscn" type="PackedScene" id=2]
 [ext_resource path="res://tracks/pieces/curve_right.tscn" type="PackedScene" id=3]
+
 
 [node name="TrackTest" type="Spatial"]
 
