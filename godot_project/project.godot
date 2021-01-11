@@ -19,6 +19,12 @@ config/name="tco-sim"
 run/main_scene="res://root/root.tscn"
 config/icon="res://sim_icon.png"
 
+[display]
+
+window/size/resizable=false
+window/size/borderless=true
+window/size/fullscreen=true
+
 [input]
 
 steer_left={
