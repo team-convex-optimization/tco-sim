@@ -3,4 +3,5 @@
 ## Dependencies
 - mss
 - opencv-python
+- numpy
 
