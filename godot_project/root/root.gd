@@ -2,7 +2,7 @@ extends Spatial
 
 
 # Declare member variables here. Examples:
-var is_verbose_on = true
+var is_verbose_on = false
 const update_interval = 0.2
 
 #car state that will be updated every update_interval

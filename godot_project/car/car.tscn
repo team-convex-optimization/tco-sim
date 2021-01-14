@@ -44,7 +44,7 @@ mesh = ExtResource( 4 )
 material/0 = null
 
 [node name="Camera" type="Camera" parent="VehicleBody/Accessories/CameraMount"]
-transform = Transform( -1, 2.09447e-07, -2.49609e-07, 0, 0.766044, 0.642788, 3.25841e-07, 0.642788, -0.766044, 0, -0.113761, 0.83322 )
+transform = Transform( -1, -2.49609e-07, 2.09447e-07, 0, 0.642787, 0.766044, -3.25841e-07, 0.766044, -0.642787, 0, -0.113761, 0.83322 )
 fov = 85.0
 
 [node name="CarWheelFR" type="VehicleWheel" parent="VehicleBody"]

@@ -6,12 +6,6 @@
 [ext_resource path="res://root/mat_floor/floor_roughness.jpg" type="Texture" id=4]
 [ext_resource path="res://root/mat_floor/floor_albedo.jpg" type="Texture" id=5]
 
-
-
-
-
-
-
 [resource]
 albedo_texture = ExtResource( 5 )
 roughness_texture = ExtResource( 4 )
