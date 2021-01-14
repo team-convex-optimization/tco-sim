@@ -25,6 +25,10 @@ window/size/width=600
 window/size/height=338
 window/size/resizable=false
 
+[gdnative]
+
+singletons=[  ]
+
 [input]
 
 steer_left={

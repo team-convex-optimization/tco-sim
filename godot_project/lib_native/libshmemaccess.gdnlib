@@ -1,0 +1,14 @@
+[general]
+
+singleton=false
+symbol_prefix="godot_"
+load_once=true
+reloadable=true
+
+[entry]
+
+X11.64="res://lib_native/libshmemaccess.so"
+
+[dependencies]
+
+X11.64=[  ]

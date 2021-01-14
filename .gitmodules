@@ -1,3 +1,9 @@
-[submodule "src/tco_shmem"]
-	path = src/tco_shmem
+[submodule "godot_headers"]
+	path = godot_headers
+	url = https://github.com/godotengine/godot_headers.git
+[submodule "lib_native/libshmemaccess/lib/tco_shmem"]
+	path = lib_native/libshmemaccess/lib/tco_shmem
 	url = https://github.com/team-convex-optimization/tco-shmem
+[submodule "lib_native/libshmemaccess/lib/tco_libd"]
+	path = lib_native/libshmemaccess/lib/tco_libd
+	url = https://github.com/team-convex-optimization/tco-libd

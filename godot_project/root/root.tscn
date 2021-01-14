@@ -44,7 +44,7 @@ shadow_enabled = true
 
 [node name="SpotLight" type="SpotLight" parent="."]
 transform = Transform( 1, 0, 0, 0, -1.62921e-07, 1, 0, -1, -1.62921e-07, -4.48968, 9.23735, 9.25188 )
-light_energy = 2.0
+light_energy = 9.11
 light_indirect_energy = 2.0
 shadow_enabled = true
 spot_range = 20.0

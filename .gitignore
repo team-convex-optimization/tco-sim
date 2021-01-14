@@ -6,5 +6,9 @@ export_presets.cfg
 # Imported translations (automatically generated from CSV files)
 *.translation
 
-#VSCode env
+# VSCode env
 .vscode/
+
+# Ignore all build output
+build/
+godot_project/lib_native/*.so
