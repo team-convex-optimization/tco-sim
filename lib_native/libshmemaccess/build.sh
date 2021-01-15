@@ -26,5 +26,5 @@ clang \
     -rdynamic \
     -shared \
     -l rt \
-    build/*.o \
+    build/shmem_access.o \
     -o ../../godot_project/lib_native/libshmemaccess.so

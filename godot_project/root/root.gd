@@ -2,7 +2,7 @@ extends Spatial
 
 
 # Declare member variables here. Examples:
-var is_verbose_on = false
+var is_verbose_on = true
 const update_interval = 0.2
 
 #car state that will be updated every update_interval
@@ -18,6 +18,7 @@ func _ready():
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
+	
 	if (is_verbose_on):
 		total_time += delta
 		var vehicle = get_node("Car/VehicleBody")
@@ -31,6 +32,8 @@ func _process(delta):
 			last_update = total_time
 			wheel_rpm = [int(vehicle.get_node("CarWheelFL").get_rpm()), int(vehicle.get_node("CarWheelFR").get_rpm()), int(vehicle.get_node("CarWheelRL").get_rpm()), int(vehicle.get_node("CarWheelRR").get_rpm())]
 			speed = ((2 * 3.14159 * 0.0325 * wheel_rpm[0])*60)/1000
+			var a = shmem_access.get_data()
+			print_debug(a)
 		
 		var isFRW_ontrack = get_node("Car/VehicleBody/CarWheelFR").get_global_transform().origin[1] > 0.3199
 		var isFLW_ontrack = get_node("Car/VehicleBody/CarWheelFL").get_global_transform().origin[1] > 0.3199
