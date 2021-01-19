@@ -2,7 +2,7 @@ extends Spatial
 
 
 # Declare member variables here. Examples:
-var is_verbose_on = true
+var is_verbose_on = false
 const update_interval = 0.2
 
 #car state that will be updated every update_interval
@@ -10,7 +10,7 @@ var total_time = 0
 var last_update = -1
 var wheel_rpm = [0,0,0,0]
 var speed = 0.0
-onready var shmem_access = preload("res://lib_native/libshmemaccess.gdns").new()
+#onready var shmem_access = preload("res://lib_native/libshmemaccess.gdns").new()
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -32,8 +32,8 @@ func _process(delta):
 			last_update = total_time
 			wheel_rpm = [int(vehicle.get_node("CarWheelFL").get_rpm()), int(vehicle.get_node("CarWheelFR").get_rpm()), int(vehicle.get_node("CarWheelRL").get_rpm()), int(vehicle.get_node("CarWheelRR").get_rpm())]
 			speed = ((2 * 3.14159 * 0.0325 * wheel_rpm[0])*60)/1000
-			var a = shmem_access.get_data()
-			print_debug(a)
+			#var a = shmem_access.get_data()
+			#print_debug(a)
 		
 		var isFRW_ontrack = get_node("Car/VehicleBody/CarWheelFR").get_global_transform().origin[1] > 0.3199
 		var isFLW_ontrack = get_node("Car/VehicleBody/CarWheelFL").get_global_transform().origin[1] > 0.3199
