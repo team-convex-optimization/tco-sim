@@ -43,5 +43,5 @@ func _process(delta):
 		text += "\nSpeed (km/h) : " + str(speed)
 		text+= "\nDrifting? : " + str(is_skidding)
 		text+= "\nWheel_contact (FL,FR,RL,RR): " + str(isFLW_ontrack) + " " + str(isFRW_ontrack) + " " + str(isRLW_ontrack) + " " + str(isRRW_ontrack) 
-		get_node("RichTextLabel").text = text
+		get_node("DebugInfo").text = text
 
