@@ -113,7 +113,7 @@ void shmem_destructor(godot_object *p_instance, void *p_method_data, void *p_use
     api->godot_free(p_user_data);
     munmap(0, TCO_SHMEM_SIZE_CONTROL);
     sem_close(control_data_sem);
-    log_info("shmem has been destroyed\n");
+    log_info("shmem has been destroyed");
 }
 
 /**
