@@ -10,7 +10,7 @@ popd
 pushd build
 clang \
     -Wall \
-    -std=c99 \
+    -std=c11 \
     -fPIC \
     -c \
     -I ../../../godot_headers \
@@ -22,9 +22,10 @@ popd
 
 clang \
     -Wall \
-    -std=c99 \
+    -std=c11 \
     -rdynamic \
     -shared \
     -l rt \
     build/*.o \
     -o ../../godot_project/lib_native/libshmemaccess.so
+    

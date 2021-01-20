@@ -90,7 +90,7 @@ void *shmem_constructor(godot_object *p_instance, void *p_method_data)
 {
     if (log_init("sim", "./log.txt") != 0)
     {
-        // TODO: Log using engine built-in logger: "Failed to initialize the logger\n"
+        api->godot_print_error("Failed to init logger", "shmem_constructor", "shmem_access.c", 94);
         return (void *)EXIT_FAILURE;
     }
 
@@ -111,7 +111,9 @@ void *shmem_constructor(godot_object *p_instance, void *p_method_data)
 void shmem_destructor(godot_object *p_instance, void *p_method_data, void *p_user_data)
 {
     api->godot_free(p_user_data);
-    shm_unlink(TCO_SHMEM_NAME_CONTROL); // Unmap the shmem space
+    munmap(0, TCO_SHMEM_SIZE_CONTROL);
+    sem_close(control_data_sem);
+    log_info("shmem has been destroyed");
 }
 
 /**
@@ -126,6 +128,10 @@ godot_variant shmem_get_data(godot_object *p_instance, void *p_method_data,
     godot_variant real_ret;
     godot_array ret;
     api->godot_variant_new_nil(&real_ret);
+    api->godot_array_new(&ret);
+
+    if (control_data_sem == NULL)
+        shmem_constructor(p_instance, p_method_data);
 
     /* Code to access the shmem space */
     if (sem_wait(control_data_sem) == -1)
@@ -138,16 +144,17 @@ godot_variant shmem_get_data(godot_object *p_instance, void *p_method_data,
     {
         for (int i = 0; i < 16; i++)
         { //Loop through channels. If they are active, add the float to the array. Else False.
+            godot_variant pulse_frac;
             if (control_data->ch[i].active > 0)
             {
-                godot_variant pulse_frac;
                 api->godot_variant_new_real(&pulse_frac, control_data->ch[i].pulse_frac);
-                api->godot_array_push_back(&ret, &pulse_frac);
             }
             else
             {
-                api->godot_array_push_back(&ret, false);
+                api->godot_variant_new_bool(&pulse_frac, GODOT_FALSE);
             }
+            api->godot_array_push_back(&ret, &pulse_frac);
+
         }
     }
     /* END: Critical section */
