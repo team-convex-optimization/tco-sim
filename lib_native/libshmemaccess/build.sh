@@ -23,10 +23,8 @@ popd
 clang \
     -Wall \
     -std=c11 \
-    -Igreeting build/log.o \
-    -Igreeting build/ipc.o \
     -rdynamic \
     -shared \
     -l rt \
-    build/shmem_access.o \
+    build/*.o \
     -o ../../godot_project/lib_native/libshmemaccess.so

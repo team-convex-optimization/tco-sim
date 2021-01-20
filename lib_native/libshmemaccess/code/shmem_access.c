@@ -88,16 +88,15 @@ sem_t *control_data_sem;
 */
 void *shmem_constructor(godot_object *p_instance, void *p_method_data)
 {
-    if (log_init("sim", ".///log.txt") != 0)
+    if (log_init("sim", "./log.txt") != 0)
     {
-        // TODO: //log using engine built-in //logger: "Failed to initialize the //logger\n"
+        api->godot_print_error("Failed to init logger", "shmem_constructor", "shmem_access.c", 94);
         return (void *)EXIT_FAILURE;
     }
 
     if (shmem_map(TCO_SHMEM_NAME_CONTROL, TCO_SHMEM_SIZE_CONTROL, TCO_SHMEM_NAME_SEM_CONTROL, O_RDWR, (void **)&control_data, &control_data_sem) != 0)
     {
-        api->godot_print_error("SHMEM FAILED!", "shmem_constructor", "shmem_access", 157);
-        //log_error("Failed to map shared memory and associated semaphore");
+        log_error("Failed to map shared memory and associated semaphore");
         return (void *)EXIT_FAILURE;
     }
 
@@ -131,12 +130,12 @@ godot_variant shmem_get_data(godot_object *p_instance, void *p_method_data,
     if (control_data_sem == NULL)
         shmem_constructor(p_instance, p_method_data);
 
-    // /* Code to access the shmem space */
+    /* Code to access the shmem space */
     if (sem_wait(control_data_sem) == -1)
     {
         return real_ret;
     }
-    // /* START: Critical section */
+    /* START: Critical section */
     if (control_data->valid == 1)
     {
         for (int i = 0; i < 16; i++)
@@ -154,7 +153,7 @@ godot_variant shmem_get_data(godot_object *p_instance, void *p_method_data,
 
         }
     }
-    // /* END: Critical section */
+    /* END: Critical section */
     if (sem_post(control_data_sem) == -1)
     {
         return real_ret;
