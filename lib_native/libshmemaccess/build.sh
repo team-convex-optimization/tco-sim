@@ -28,3 +28,4 @@ clang \
     -l rt \
     build/*.o \
     -o ../../godot_project/lib_native/libshmemaccess.so
+    

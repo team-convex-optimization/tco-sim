@@ -5,7 +5,7 @@
 [ext_resource path="res://root/mat_floor/mat_floor.tres" type="Material" id=3]
 [ext_resource path="res://root/root.gd" type="Script" id=4]
 [ext_resource path="res://car/mat_rubber/mat_rubber.tres" type="Material" id=5]
-[ext_resource path="res://root/Sprite.gd" type="Script" id=6]
+[ext_resource path="res://root/noise.gd" type="Script" id=6]
 
 [sub_resource type="PhysicsMaterial" id=1]
 
@@ -76,7 +76,7 @@ scale = Vector2( -1.21624, 0.685508 )
 region_rect = Rect2( 0, 0, 550, 550 )
 script = ExtResource( 6 )
 
-[node name="RichTextLabel" type="RichTextLabel" parent="."]
+[node name="DebugInfo" type="RichTextLabel" parent="."]
 margin_right = 350.0
 margin_bottom = 200.0
 __meta__ = {

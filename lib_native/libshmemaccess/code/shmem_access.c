@@ -111,6 +111,7 @@ void *shmem_constructor(godot_object *p_instance, void *p_method_data)
 void shmem_destructor(godot_object *p_instance, void *p_method_data, void *p_user_data)
 {
     api->godot_free(p_user_data);
+    shm_unlink(TCO_SHMEM_NAME_CONTROL);
 }
 
 /**
@@ -133,6 +134,7 @@ godot_variant shmem_get_data(godot_object *p_instance, void *p_method_data,
     /* Code to access the shmem space */
     if (sem_wait(control_data_sem) == -1)
     {
+        log_error("sem_wait: %s", strerror(errno));
         return real_ret;
     }
     /* START: Critical section */
@@ -156,6 +158,7 @@ godot_variant shmem_get_data(godot_object *p_instance, void *p_method_data,
     /* END: Critical section */
     if (sem_post(control_data_sem) == -1)
     {
+        log_error("sem_post: %s", strerror(errno));
         return real_ret;
     }
 
