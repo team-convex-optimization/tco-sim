@@ -10,7 +10,7 @@ popd
 pushd build
 clang \
     -Wall \
-    -std=c99 \
+    -std=c11 \
     -fPIC \
     -c \
     -I ../../../godot_headers \
@@ -22,7 +22,9 @@ popd
 
 clang \
     -Wall \
-    -std=c99 \
+    -std=c11 \
+    -Igreeting build/log.o \
+    -Igreeting build/ipc.o \
     -rdynamic \
     -shared \
     -l rt \

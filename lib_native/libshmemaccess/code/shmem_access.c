@@ -10,54 +10,10 @@
 #include <errno.h>
 #include <unistd.h>
 
-// #include "tco_libd.h"
+#include "tco_libd.h"
 #include "tco_shmem.h"
 
-
-static int shmem_map(
-    const char *shmem_name,
-    const uint32_t shmem_size,
-    const char *shmem_sem_name,
-    const int permissions,
-    void **shmem,
-    sem_t **shmem_sem)
-{
-    int page_permissions = 0;
-    if (permissions == O_RDONLY)
-    {
-        page_permissions = PROT_READ;
-    }
-    else if (permissions == O_WRONLY)
-    {
-        page_permissions = PROT_WRITE;
-    }
-    else if (permissions == O_RDWR)
-    {
-        page_permissions = PROT_READ | PROT_WRITE;
-    }
-    else
-    {
-        return -1;
-    }
-
-    int shmem_fd = shm_open(shmem_name, permissions, 0666);
-    if (shmem_fd == -1)
-    {
-        return -1;
-    }
-    *shmem = (struct tco_shmem_data_control *)mmap(0, shmem_size, page_permissions, MAP_SHARED, shmem_fd, 0);
-    if (*shmem == MAP_FAILED)
-    {
-        return -1;
-    }
-    *shmem_sem = sem_open(shmem_sem_name, 0);
-    if (*shmem_sem == SEM_FAILED)
-    {
-        return -1;
-    }
-    return EXIT_SUCCESS;
-}
-
+int log_level = LOG_INFO | LOG_DEBUG | LOG_ERROR;
 
 const godot_gdnative_core_api_struct *api = NULL;
 const godot_gdnative_ext_nativescript_api_struct *nativescript_api = NULL;
@@ -132,13 +88,12 @@ sem_t *control_data_sem;
 */
 void *shmem_constructor(godot_object *p_instance, void *p_method_data)
 {
-    /*FIX THIS LOGGING ERROR*
     if (log_init("sim", ".///log.txt") != 0)
     {
         // TODO: //log using engine built-in //logger: "Failed to initialize the //logger\n"
         return (void *)EXIT_FAILURE;
     }
-    */
+
     if (shmem_map(TCO_SHMEM_NAME_CONTROL, TCO_SHMEM_SIZE_CONTROL, TCO_SHMEM_NAME_SEM_CONTROL, O_RDWR, (void **)&control_data, &control_data_sem) != 0)
     {
         api->godot_print_error("SHMEM FAILED!", "shmem_constructor", "shmem_access", 157);

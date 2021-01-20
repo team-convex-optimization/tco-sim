@@ -56,16 +56,10 @@ shadow_enabled = true
 spot_range = 20.0
 
 [node name="TrackTest" parent="." instance=ExtResource( 2 )]
-
-[node name="RichTextLabel" type="RichTextLabel" parent="."]
-visible = false
-margin_right = 599.0
-margin_bottom = 338.0
-__meta__ = {
-"_edit_use_anchors_": false
-}
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0449934, 0.0137243, -0.0244455 )
 
 [node name="NoiseLayer_1" type="Sprite" parent="."]
+visible = false
 modulate = Color( 0.196078, 0.196078, 0.196078, 0.196078 )
 light_mask = -2147483647
 position = Vector2( 301.124, 167.489 )
@@ -74,9 +68,17 @@ region_rect = Rect2( 0, 0, 550, 550 )
 script = ExtResource( 6 )
 
 [node name="NoiseLayer_2" type="Sprite" parent="."]
+visible = false
 modulate = Color( 0.196078, 0.196078, 0.196078, 0.196078 )
 light_mask = -2147483647
 position = Vector2( 301.124, 167.489 )
 scale = Vector2( -1.21624, 0.685508 )
 region_rect = Rect2( 0, 0, 550, 550 )
 script = ExtResource( 6 )
+
+[node name="RichTextLabel" type="RichTextLabel" parent="."]
+margin_right = 350.0
+margin_bottom = 200.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
