@@ -1,5 +1,4 @@
 import time
-
 import mss
 import numpy as np
 import cv2
@@ -14,15 +13,19 @@ queueLine = np.array([], dtype=typeDraw)
 queueCirc = np.array([], dtype=typeDraw)
 queueRect = np.array([], dtype=typeDraw)
 
+maskCar = np.array([[[190, height], [220, 180], [380, 180], [410, height]]], dtype=np.int32)
+kernelOnes2x2 = np.ones((2, 2), np.uint8)
+kernelSharpen = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
+
 def clamp(n, minN, maxN): return max(minN, min(n, maxN))
 
 def queueDrawLine(pos0, pos1, color, thickness):
     global queueLine
     queueLine = np.append(queueLine, np.array([(pos0, pos1, color, thickness)], dtype=typeDraw))
 
-def queueDrawCirc(pos0, pos1, color, thickness):
+def queueDrawCirc(pos, color, thickness):
     global queueCirc
-    queueCirc = np.append(queueCirc, np.array([(pos0, pos1, color, thickness)], dtype=typeDraw))
+    queueCirc = np.append(queueCirc, np.array([(pos, 0, color, thickness)], dtype=typeDraw))
 
 def queueDrawRect(pos0, pos1, color, thickness):
     global queueRect
@@ -50,8 +53,8 @@ def drawAllRect(img):
             cv2.rectangle(img, tuple(item['pos0'].tolist()), tuple(item['pos1'].tolist()), tuple(item['color'].tolist()), item['thickness'].tolist())
 
 def findLimits(binImg):
-    centerWidth = int(width / 2)
-    centerHeight = int(height / 2)
+    centerWidth = round(width / 2)
+    centerHeight = round(height / 2)
 
     pointLeftDefault = (0, centerHeight)
     pointRightDefault = (width, centerHeight)
@@ -70,52 +73,84 @@ def findLimits(binImg):
 
     # TODO: Finding these left and right points can be made more reliable if after the initial
     # search, another vertical search at the extremes is carried out.
-    return (pointLeft, pointRight)
+    return [pointLeft, pointRight]
 
-def slidingWindowPoints(origImg, procImg, trackLimitLeft, trackLimitRight):
-    lastVec = (0, 0)
-    limitLeftLast = trackLimitLeft
-    limitRigthLast = trackLimitRight
+# Returns square matrix centered at point (size needs to be odd)
+def submatAtPoint(procImg, point, size):
+    x, y = point
+    sizeH = math.floor(size / 2)
+    arr = procImg[y-sizeH:y+1+sizeH,x-sizeH:x+1+sizeH]
+    arr = np.reshape(arr, (size, size))
+    return arr
 
-    delta = 0
-    # 'sWin' for sliding window
-    sWinWidth = 10
-    sWinWidthH = int(sWinWidth/2)
-    sWinHeight = 10
-    sWinHeightH = int(sWinHeight/2)
-    while delta < 10:
-        rectTopLeft = (limitLeftLast[0] - sWinWidthH, limitLeftLast[1] - sWinHeightH)
-        rectBotRight = (limitLeftLast[0] + sWinWidthH, limitLeftLast[1] + sWinHeightH)
-        queueDrawRect(rectTopLeft, rectBotRight, np.array([0, 255, 0], dtype=np.int32), 1)
-        rect = procImg[rectTopLeft[1]:rectBotRight[1], rectTopLeft[0]:rectBotRight[0]]
-        print(rect)
-        points = cv2.findNonZero(rect)
+# 10.1007/978-3-642-93208-3 (Theo Pavlidis' Algorithm)
+# XXX: Fails to trace curves
+def limitTracePavlidis(procImg, limit):
+    global width, height
+    matFront = np.array([[-1,-1],[-1,0],[-1,1]], dtype=np.int16)
+    matLeft = np.array([[1,-1],[0,-1],[-1,-1]], dtype=np.int16)
+    matRight = np.array([[-1,1],[0,1],[1,1]], dtype=np.int16)
+    matRear = np.array([[1,1],[1,0],[1,-1]], dtype=np.int16)
+    tracerDir = 'front'
+    tracerPos = [limit[0], limit[1]]
+    procImg[limit[0]-1, limit[1]] = 0 # Ensure correct start pos condition
 
-        if points is not None:
-            # Find line that fits the white points on rect matrix
-            vx, vy, x, y = cv2.fitLine(points, cv2.DIST_L2, 0, 0.01, 0.01)
-            x0 = rectBotRight[0] - sWinWidthH
-            y0 = rectBotRight[1] - sWinHeightH
-            x1 = x0 + round(vx[0] * sWinWidth)
-            y1 = y0 + round(vy[0] * sWinHeight)
-            
-            queueDrawLine((x0, y0), (x1, y1), (0, 0, 255), 2)
-            limitLeftLast = (x1, y1)
-            lastVec = (vx, vy)
-        delta += 1
+    i = 0
+    rotInPlace = 0
+    matDir = matFront
+    dirDelta = 'left'
+    while 1:
+        queueDrawCirc(tracerPos, (0,255,0), 1)
+        offX, offY = tracerPos
+        if tracerDir == 'front':
+            matDir = matFront
+            dirDelta = 'left'
+        elif tracerDir == 'left':
+            matDir = matLeft
+            dirDelta = 'rear'
+        elif tracerDir == 'right':
+            matDir = matRight
+            dirDelta = 'front'
+        elif tracerDir == 'rear':
+            matDir = matRear
+            dirDelta = 'right'
+        else:
+            raise ValueError
+        
+        p1 = [clamp(offY + matDir[0][0], 0, height - 1), clamp(offX + matDir[0][1], 0, width - 1)]
+        p2 = [clamp(offY + matDir[1][0], 0, height - 1), clamp(offX + matDir[1][1], 0, width - 1)]
+        p3 = [clamp(offY + matDir[2][0], 0, height - 1), clamp(offX + matDir[2][1], 0, width - 1)]
+        valP1 = procImg[p1[0], p1[1]]
+        valP2 = procImg[p2[0], p2[1]]
+        valP3 = procImg[p3[0], p3[1]]
+
+        if valP1 > 0:
+            rotInPlace = 0
+            tracerDir = dirDelta
+            tracerPos = [p1[1], p1[0]]
+        elif valP2 > 0:
+            rotInPlace = 0
+            tracerPos = [p2[1], p2[0]]
+        elif valP3 > 0:
+            rotInPlace = 0
+            tracerPos = [p3[1], p3[0]]
+        else:
+            rotInPlace += 1
+            tracerDir = dirDelta
+        
+        if (rotInPlace > 2) or (i >= 100):
+            break
+        else:
+            i += 1
     return []
 
 def main():
     with mss.mss() as sct:
         # The screen part to capture
         monitor = {"top": 64, "left": 0, "width": width, "height": height}
-        maskCar = np.array([[[190, height], [220, 180], [380, 180], [410, height]]], dtype=np.int32)
-        kernelOnes2x2 = np.ones((2, 2), np.uint8)
-        kernelSharpen = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
-
         cv2.namedWindow('win1')
 
-        while "Screen capturing":
+        while 1:
             last_time = time.time()
 
             # Get raw pixels from the screen, save it to a Numpy array
@@ -131,23 +166,22 @@ def main():
             procImg = cv2.Canny(procImg, thresh, thresh*2, 3)
 
             # Increase track limit line width
-            procImg = cv2.dilate(procImg, kernelOnes2x2, iterations=1)
+            procImg = cv2.dilate(procImg, kernelOnes2x2, iterations=2)
 
             # Mask car model
             procImg = cv2.fillPoly(procImg, maskCar, (0, 0, 0))
 
             # Find points on left and right track limits
-            trackLimitLeft, trackLimitRight = findLimits(procImg)
+            [trackLimitLeft, trackLimitRight] = findLimits(procImg)
 
             # Find all points on left and right track limits
-            points = slidingWindowPoints(origImg, procImg, trackLimitLeft, trackLimitRight)
+            limitTracePavlidis(procImg, np.array(trackLimitLeft))
+            # limitTracePavlidis(procImg, np.array(trackLimitRight))
 
             # Draw points on original image
-            for point in points:
-                queueDrawCirc(point, 0, (0, 0, 255), 1)
-            queueDrawCirc(trackLimitLeft, 0, (0, 0, 255), 1)
-            queueDrawCirc(trackLimitRight, 0, (0, 0, 255), 1)
-
+            # for point in points:
+            #     queueDrawCirc(point, (0, 0, 255), 1)
+            queueDrawLine((0, round(height / 2)), (width, round(height / 2)), (0, 0, 255), 1)
             procImg = cv2.cvtColor(procImg, cv2.COLOR_GRAY2BGR)
             drawAllLine(procImg)
             drawAllCirc(procImg)

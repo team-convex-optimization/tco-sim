@@ -49,9 +49,10 @@ light_energy = 9.11
 light_indirect_energy = 2.0
 shadow_enabled = true
 spot_range = 20.0
+spot_angle = 75.0
 
 [node name="SpotLight2" type="SpotLight" parent="."]
-transform = Transform( 1, 0, 0, 0, -1.62921e-07, 1, 0, -1, -1.62921e-07, -4.48968, 9.23735, -0.7481 )
+transform = Transform( 1, 0, 0, 0, -1.62921e-07, 1, 0, -1, -1.62921e-07, -4.48968, 9.23735, 16.7731 )
 shadow_enabled = true
 spot_range = 20.0
 

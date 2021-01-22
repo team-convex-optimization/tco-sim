@@ -86,8 +86,8 @@ common/physics_fps=120
 
 quality/filters/anisotropic_filter_level=16
 quality/shadows/filter_mode=2
-quality/subsurface_scattering/quality=2
-quality/subsurface_scattering/follow_surface=true
+quality/subsurface_scattering/quality=0
+quality/subsurface_scattering/weight_samples=false
 quality/voxel_cone_tracing/high_quality=true
 quality/filters/msaa=4
 environment/default_environment="res://environment/environment.tres"

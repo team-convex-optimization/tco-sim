@@ -54,7 +54,7 @@ func input_get():
 	if Input.is_action_pressed("joy_deccelerate"):
 		motor_V -= Input.get_action_strength("joy_deccelerate") * motor_max_V
 		
-	servo_angle = -clamp(servo_angle, -0.5, 0.5)
+	servo_angle = -clamp(servo_angle, -0.4, 0.4)
 	motor_V = clamp(motor_V, -motor_max_V, motor_max_V)
 
 
