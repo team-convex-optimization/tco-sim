@@ -144,6 +144,48 @@ def limitTracePavlidis(procImg, limit):
             i += 1
     return []
 
+def limitTraceRadialSweep(procImg, limit, clockwise=0):
+    # dirDelta = [Front, FrontLeft, Left, RearLeft, Rear, RearRight, Right, FrontRight]
+    dirDelta = np.array([[-1,0],[-1,-1],[0,-1],[1,-1],[1,0],[1,1],[0,1],[-1,1]]) 
+    tracerPos = [limit[0], limit[1]]
+
+    if not clockwise:
+        tracerDirIdx = 6 # Right
+    else:
+        tracerDirIdx = 2 # Left
+
+    i = 0
+    x = 0
+    y = 0
+    inPlaceRot = 0
+    while 1:
+        queueDrawCirc(tracerPos, (0,255,0), 1)
+        y = tracerPos[1] + dirDelta[tracerDirIdx][0]
+        y = clamp(y, 0, height - 1)
+        x = tracerPos[0] + dirDelta[tracerDirIdx][1]
+        x = clamp(x, 0, width - 1)
+        if procImg[y,x] > 0:
+            tracerPos = [x, y]
+            inPlaceRot = 0
+            tracerDirIdx += 4 # Same for both CW and CCW since its a 180 deg rotation
+        else:
+            inPlaceRot += 1
+        
+        if not clockwise:
+            tracerDirIdx += 1
+        else:
+            if tracerDirIdx == 0:
+                tracerDirIdx = len(dirDelta) - 1 
+            else:
+                tracerDirIdx -= 1
+        tracerDirIdx %= len(dirDelta)
+
+        if inPlaceRot >= 7 or i > 600:
+            break
+        else:
+            i += 1
+    return []
+
 def main():
     with mss.mss() as sct:
         # The screen part to capture
@@ -166,7 +208,7 @@ def main():
             procImg = cv2.Canny(procImg, thresh, thresh*2, 3)
 
             # Increase track limit line width
-            procImg = cv2.dilate(procImg, kernelOnes2x2, iterations=2)
+            procImg = cv2.dilate(procImg, kernelOnes2x2, iterations=3)
 
             # Mask car model
             procImg = cv2.fillPoly(procImg, maskCar, (0, 0, 0))
@@ -175,12 +217,14 @@ def main():
             [trackLimitLeft, trackLimitRight] = findLimits(procImg)
 
             # Find all points on left and right track limits
-            limitTracePavlidis(procImg, np.array(trackLimitLeft))
-            # limitTracePavlidis(procImg, np.array(trackLimitRight))
+            pointsLeft = limitTraceRadialSweep(procImg, np.array(trackLimitLeft), 0)
+            pointsRight = limitTraceRadialSweep(procImg, np.array(trackLimitRight), 1)
 
             # Draw points on original image
-            # for point in points:
-            #     queueDrawCirc(point, (0, 0, 255), 1)
+            for point in pointsLeft:
+                queueDrawCirc(point, (0, 0, 255), 1)
+            for point in pointsRight:
+                queueDrawCirc(point, (0, 0, 255), 1)
             queueDrawLine((0, round(height / 2)), (width, round(height / 2)), (0, 0, 255), 1)
             procImg = cv2.cvtColor(procImg, cv2.COLOR_GRAY2BGR)
             drawAllLine(procImg)
