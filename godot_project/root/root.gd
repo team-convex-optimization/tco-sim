@@ -10,7 +10,6 @@ var total_time = 0
 var last_update = -1
 var wheel_rpm = [0,0,0,0]
 var speed = 0.0
-onready var shmem_access = preload("res://lib_native/libshmemaccess.gdns").new()
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -21,9 +20,9 @@ func _process(delta):
 	if (is_verbose_on):
 		total_time += delta
 		var vehicle = get_node("Car/VehicleBody")
-		var motor_voltage = vehicle.motor_V
+		var motor_voltage = vehicle.motor_v
 		var steer_angle = vehicle.servo_angle
-		var motor_rpm = vehicle.motor_KV * motor_voltage
+		var motor_rpm = vehicle.motor_kv * motor_voltage
 		var is_skidding = !bool(int(vehicle.get_node("CarWheelFL").get_skidinfo()) || int(vehicle.get_node("CarWheelFR").get_skidinfo()) || int(vehicle.get_node("CarWheelRL").get_skidinfo()) || int(vehicle.get_node("CarWheelRR").get_skidinfo()))
 		
 		var text = "motor_voltage : " + str(motor_voltage) + "\nservo_angle : " + str(steer_angle) + "\nmotor_rpm : " + str(motor_rpm) 
@@ -31,8 +30,6 @@ func _process(delta):
 			last_update = total_time
 			wheel_rpm = [int(vehicle.get_node("CarWheelFL").get_rpm()), int(vehicle.get_node("CarWheelFR").get_rpm()), int(vehicle.get_node("CarWheelRL").get_rpm()), int(vehicle.get_node("CarWheelRR").get_rpm())]
 			speed = ((2 * 3.14159 * 0.0325 * wheel_rpm[0])*60)/1000
-			var a = shmem_access.get_data()
-			print_debug(a)
 		
 		var isFRW_ontrack = get_node("Car/VehicleBody/CarWheelFR").get_global_transform().origin[1] > 0.3199
 		var isFLW_ontrack = get_node("Car/VehicleBody/CarWheelFL").get_global_transform().origin[1] > 0.3199
