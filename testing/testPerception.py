@@ -6,6 +6,10 @@ import math
 
 width = 600
 height = 338
+debug = False
+
+# Where the simulator window is (upper left corner)
+simWin = {"top": 64, "left": 0, "width": width, "height": height}
 
 # Allow for drawing in one place by queueing draws throughout the processing loop
 typeDraw = np.dtype([('pos0', 'i4', 2), ('pos1', 'i4', 2), ('color', 'i4', 3), ('thickness', 'i4')])
@@ -20,39 +24,47 @@ kernelSharpen = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
 def clamp(n, minN, maxN): return max(minN, min(n, maxN))
 
 def queueDrawLine(pos0, pos1, color, thickness):
-    global queueLine
-    queueLine = np.append(queueLine, np.array([(pos0, pos1, color, thickness)], dtype=typeDraw))
+    if debug:
+        global queueLine
+        queueLine = np.append(queueLine, np.array([(pos0, pos1, color, thickness)], dtype=typeDraw))
 
 def queueDrawCirc(pos, color, thickness):
-    global queueCirc
-    queueCirc = np.append(queueCirc, np.array([(pos, 0, color, thickness)], dtype=typeDraw))
+    if debug:
+        global queueCirc
+        queueCirc = np.append(queueCirc, np.array([(pos, 0, color, thickness)], dtype=typeDraw))
 
 def queueDrawRect(pos0, pos1, color, thickness):
-    global queueRect
-    queueRect = np.append(queueRect, np.array([(pos0, pos1, color, thickness)], dtype=typeDraw))
+    if debug:
+        global queueRect
+        queueRect = np.append(queueRect, np.array([(pos0, pos1, color, thickness)], dtype=typeDraw))
 
 def clearDrawQueue():
-    global queueLine, queueCirc, queueRect
-    queueLine = np.array([], dtype=typeDraw)
-    queueCirc = np.array([], dtype=typeDraw)
-    queueRect = np.array([], dtype=typeDraw)
+    if debug:
+        global queueLine, queueCirc, queueRect
+        queueLine = np.array([], dtype=typeDraw)
+        queueCirc = np.array([], dtype=typeDraw)
+        queueRect = np.array([], dtype=typeDraw)
 
 def drawAllLine(img):
-    if queueLine.size != 0:
-        for item in np.nditer(queueLine):
-            cv2.line(img, tuple(item['pos0'].tolist()), tuple(item['pos1'].tolist()), tuple(item['color'].tolist()), item['thickness'].tolist(), 0, 0)
+    if debug:
+        if queueLine.size != 0:
+            for item in np.nditer(queueLine):
+                cv2.line(img, tuple(item['pos0'].tolist()), tuple(item['pos1'].tolist()), tuple(item['color'].tolist()), item['thickness'].tolist(), 0, 0)
 
 def drawAllCirc(img):
-    if queueCirc.size != 0:
-        for item in np.nditer(queueCirc):
-            cv2.circle(img, tuple(item['pos0'].tolist()), item['thickness'].tolist(), tuple(item['color'].tolist()), -1)
+    if debug:
+        if queueCirc.size != 0:
+            for item in np.nditer(queueCirc):
+                cv2.circle(img, tuple(item['pos0'].tolist()), item['thickness'].tolist(), tuple(item['color'].tolist()), -1)
 
 def drawAllRect(img):
-    if queueRect.size != 0:
-        for item in np.nditer(queueRect):
-            cv2.rectangle(img, tuple(item['pos0'].tolist()), tuple(item['pos1'].tolist()), tuple(item['color'].tolist()), item['thickness'].tolist())
+    if debug:
+        if queueRect.size != 0:
+            for item in np.nditer(queueRect):
+                cv2.rectangle(img, tuple(item['pos0'].tolist()), tuple(item['pos1'].tolist()), tuple(item['color'].tolist()), item['thickness'].tolist())
 
-def findLimits(binImg):
+def findLimits(procImg):
+    global width, height
     centerWidth = round(width / 2)
     centerHeight = round(height / 2)
 
@@ -61,12 +73,15 @@ def findLimits(binImg):
     pointLeft = pointLeftDefault
     pointRight = pointRightDefault
 
-    delta = 10
+    delta = 0
+    offset = 0
     while delta < centerWidth:
-        if pointRight == pointRightDefault and binImg[centerHeight, centerWidth + delta] > 0:
-            pointRight = (centerWidth + delta, centerHeight)
-        if pointLeft == pointLeftDefault and binImg[centerHeight, centerWidth - delta] > 0:
-            pointLeft = (centerWidth - delta, centerHeight)
+        rightX = clamp(centerWidth - offset + delta, 0, width - 1)
+        leftx = clamp(centerWidth + offset - delta, 0, width - 1)
+        if pointRight == pointRightDefault and procImg[centerHeight, rightX] > 0:
+            pointRight = (rightX, centerHeight)
+        if pointLeft == pointLeftDefault and procImg[centerHeight, leftx] > 0:
+            pointLeft = (leftx, centerHeight)
         if pointRight != pointRightDefault and pointLeft != pointLeftDefault:
             break
         delta += 1
@@ -148,6 +163,7 @@ def limitTraceRadialSweep(procImg, limit, clockwise=0):
     # dirDelta = [Front, FrontLeft, Left, RearLeft, Rear, RearRight, Right, FrontRight]
     dirDelta = np.array([[-1,0],[-1,-1],[0,-1],[1,-1],[1,0],[1,1],[0,1],[-1,1]]) 
     tracerPos = [limit[0], limit[1]]
+    points = np.array([], dtype=np.uint16)
 
     if not clockwise:
         tracerDirIdx = 6 # Right
@@ -159,6 +175,7 @@ def limitTraceRadialSweep(procImg, limit, clockwise=0):
     y = 0
     inPlaceRot = 0
     while 1:
+        points = np.append(points, tracerPos)
         queueDrawCirc(tracerPos, (0,255,0), 1)
         y = tracerPos[1] + dirDelta[tracerDirIdx][0]
         y = clamp(y, 0, height - 1)
@@ -184,48 +201,59 @@ def limitTraceRadialSweep(procImg, limit, clockwise=0):
             break
         else:
             i += 1
-    return []
+    return points
+
+def preProcess(img):
+    procImg = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    # Sharpen edges
+    procImg = cv2.filter2D(procImg, -1, kernelSharpen)
+    procImg = cv2.bitwise_not(procImg)
+
+    # Find edges
+    thresh = 300
+    procImg = cv2.Canny(procImg, thresh, thresh*2, 3)
+
+    # Increase track limit line width
+    procImg = cv2.dilate(procImg, kernelOnes2x2, iterations=3)
+
+    # Mask car model
+    procImg = cv2.fillPoly(procImg, maskCar, (0, 0, 0))
+    return procImg
+
+def limitsTrace(procImg):
+    # Find points on left and right track limits
+    [trackLimitLeft, trackLimitRight] = findLimits(procImg)
+
+    # Find all points on left and right track limits
+    pointsLeft = limitTraceRadialSweep(procImg, np.array(trackLimitLeft), 0)
+    pointsRight = limitTraceRadialSweep(procImg, np.array(trackLimitRight), 1)
+
+    return [pointsLeft, pointsRight]
+
+def grabImage():
+    # Get raw pixels from the screen, save it to a Numpy array
+    return np.array(mss.mss().grab(simWin), dtype=np.uint8)
 
 def main():
-    with mss.mss() as sct:
-        # The screen part to capture
-        monitor = {"top": 64, "left": 0, "width": width, "height": height}
+    if debug:
         cv2.namedWindow('win1')
 
-        while 1:
-            last_time = time.time()
+    while 1:
+        last_time = time.time()
 
-            # Get raw pixels from the screen, save it to a Numpy array
-            origImg = np.array(sct.grab(monitor), dtype=np.uint8)
-            procImg = cv2.cvtColor(origImg, cv2.COLOR_BGR2GRAY)
+        origImg = grabImage()
+        procImg = preProcess(origImg)
+        [pointsLeft, pointsRight] = limitsTrace(procImg)
 
-            # Sharpen edges
-            procImg = cv2.filter2D(procImg, -1, kernelSharpen)
-            procImg = cv2.bitwise_not(procImg)
-
-            # Find edges
-            thresh = 300
-            procImg = cv2.Canny(procImg, thresh, thresh*2, 3)
-
-            # Increase track limit line width
-            procImg = cv2.dilate(procImg, kernelOnes2x2, iterations=3)
-
-            # Mask car model
-            procImg = cv2.fillPoly(procImg, maskCar, (0, 0, 0))
-
-            # Find points on left and right track limits
-            [trackLimitLeft, trackLimitRight] = findLimits(procImg)
-
-            # Find all points on left and right track limits
-            pointsLeft = limitTraceRadialSweep(procImg, np.array(trackLimitLeft), 0)
-            pointsRight = limitTraceRadialSweep(procImg, np.array(trackLimitRight), 1)
-
-            # Draw points on original image
+        # Draw points on original image
+        if debug:
             for point in pointsLeft:
                 queueDrawCirc(point, (0, 0, 255), 1)
             for point in pointsRight:
                 queueDrawCirc(point, (0, 0, 255), 1)
             queueDrawLine((0, round(height / 2)), (width, round(height / 2)), (0, 0, 255), 1)
+
             procImg = cv2.cvtColor(procImg, cv2.COLOR_GRAY2BGR)
             drawAllLine(procImg)
             drawAllCirc(procImg)
@@ -233,12 +261,12 @@ def main():
             clearDrawQueue()
             cv2.imshow('win1', procImg)
 
-            print("fps: {}".format(1 / (time.time() - last_time)))
+        print("fps: {}".format(1 / (time.time() - last_time)))
 
-            # Press "q" to quit
-            if cv2.waitKey(25) & 0xFF == ord("q"):
-                cv2.destroyAllWindows()
-                break
+        # Press "q" to quit
+        if cv2.waitKey(25) & 0xFF == ord("q"):
+            cv2.destroyAllWindows()
+            break
 
 if __name__ == "__main__":
     main()
