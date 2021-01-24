@@ -2,7 +2,7 @@ extends Sprite
 
 
 # Declare member variables here. Examples:
-const noiseUpdate = 0.1 #seconds
+const noiseUpdate = 0.5 #seconds
 var time_elapsed = 0
 onready var randOffset = randi() #Ensure we get different images 
 onready var noise = OpenSimplexNoise.new()
@@ -14,8 +14,6 @@ func _ready():
 	noise.octaves = 1
 	noise.period = 5
 	noise.persistence = 0.01
-
-	
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
