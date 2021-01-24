@@ -29,7 +29,7 @@ const servo_weight = 0.045 #kg
 var motor_v = 0
 var servo_angle = 0
 const servo_angle_max = 0.4
-onready var shmem_access = preload("res://lib_native/libshmemaccess.gdns").new()
+var shmem_access = null
 
 #================ RUNTIME METHODS ================#
 
@@ -63,16 +63,27 @@ func input_get():
 
 func input_get_shmem():
 	var dat = shmem_access.get_data()
-	if not dat[1]:
-		servo_angle = -((dat[1] - 0.5) * 2) * servo_angle_max
-	if not dat[0]:
-		motor_v = ((dat[0] - 0.5) * 2) * motor_v_max
+	if dat.size() > 0:
+		if typeof(dat[1]) != TYPE_BOOL:
+			servo_angle = -((dat[1] - 0.5) * 2) * servo_angle_max
+			print(dat[1])
+		else:
+			servo_angle = 0
+		if typeof(dat[0]) != TYPE_BOOL:
+			motor_v = ((dat[0] - 0.5) * 2) * motor_v_max
+		else:
+			motor_v = 0
+	else:
+		servo_angle = 0
+		motor_v = 0
 
 func _ready():
+	if OS.get_name() == "X11":
+		shmem_access = preload("res://lib_native/libshmemaccess.gdns").new()
 	set_brake(0.003) #the decceleration when no power given to motors TODO : MEASURE ME
 
 func _physics_process(delta):
-	if mode_autonomous:
+	if mode_autonomous and (OS.get_name() == "X11"):
 		input_get_shmem()
 	else:
 		input_get()
