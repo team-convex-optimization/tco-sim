@@ -4,4 +4,3 @@
 - mss
 - opencv-python
 - numpy
-
