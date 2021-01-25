@@ -4,3 +4,4 @@
 - mss
 - opencv-python
 - numpy
+- posix-ipc
