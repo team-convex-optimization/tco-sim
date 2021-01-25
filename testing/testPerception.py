@@ -24,44 +24,37 @@ kernelSharpen = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
 def clamp(n, minN, maxN): return max(minN, min(n, maxN))
 
 def queueDrawLine(pos0, pos1, color, thickness):
-    if debug:
-        global queueLine
-        queueLine = np.append(queueLine, np.array([(pos0, pos1, color, thickness)], dtype=typeDraw))
+    global queueLine
+    queueLine = np.append(queueLine, np.array([(pos0, pos1, color, thickness)], dtype=typeDraw))
 
 def queueDrawCirc(pos, color, thickness):
-    if debug:
-        global queueCirc
-        queueCirc = np.append(queueCirc, np.array([(pos, 0, color, thickness)], dtype=typeDraw))
+    global queueCirc
+    queueCirc = np.append(queueCirc, np.array([(pos, 0, color, thickness)], dtype=typeDraw))
 
 def queueDrawRect(pos0, pos1, color, thickness):
-    if debug:
-        global queueRect
-        queueRect = np.append(queueRect, np.array([(pos0, pos1, color, thickness)], dtype=typeDraw))
+    global queueRect
+    queueRect = np.append(queueRect, np.array([(pos0, pos1, color, thickness)], dtype=typeDraw))
 
 def clearDrawQueue():
-    if debug:
-        global queueLine, queueCirc, queueRect
-        queueLine = np.array([], dtype=typeDraw)
-        queueCirc = np.array([], dtype=typeDraw)
-        queueRect = np.array([], dtype=typeDraw)
+    global queueLine, queueCirc, queueRect
+    queueLine = np.array([], dtype=typeDraw)
+    queueCirc = np.array([], dtype=typeDraw)
+    queueRect = np.array([], dtype=typeDraw)
 
 def drawAllLine(img):
-    if debug:
-        if queueLine.size != 0:
-            for item in np.nditer(queueLine):
-                cv2.line(img, tuple(item['pos0'].tolist()), tuple(item['pos1'].tolist()), tuple(item['color'].tolist()), item['thickness'].tolist(), 0, 0)
+    if queueLine.size != 0:
+        for item in np.nditer(queueLine):
+            cv2.line(img, tuple(item['pos0'].tolist()), tuple(item['pos1'].tolist()), tuple(item['color'].tolist()), item['thickness'].tolist(), 0, 0)
 
 def drawAllCirc(img):
-    if debug:
-        if queueCirc.size != 0:
-            for item in np.nditer(queueCirc):
-                cv2.circle(img, tuple(item['pos0'].tolist()), item['thickness'].tolist(), tuple(item['color'].tolist()), -1)
+    if queueCirc.size != 0:
+        for item in np.nditer(queueCirc):
+            cv2.circle(img, tuple(item['pos0'].tolist()), item['thickness'].tolist(), tuple(item['color'].tolist()), -1)
 
 def drawAllRect(img):
-    if debug:
-        if queueRect.size != 0:
-            for item in np.nditer(queueRect):
-                cv2.rectangle(img, tuple(item['pos0'].tolist()), tuple(item['pos1'].tolist()), tuple(item['color'].tolist()), item['thickness'].tolist())
+    if queueRect.size != 0:
+        for item in np.nditer(queueRect):
+            cv2.rectangle(img, tuple(item['pos0'].tolist()), tuple(item['pos1'].tolist()), tuple(item['color'].tolist()), item['thickness'].tolist())
 
 def findLimits(procImg):
     global width, height
@@ -128,6 +121,13 @@ def circleDeltaPoints(centerX, centerY, radius):
     points = front + pointsQ1 + left + pointsQ3 + rear + pointsQ4 + right + pointsQ2
     return points
 
+def wrapAround(val, valMin, valMax):
+    if val == valMin:
+        val = valMax
+    else:
+        val %= valMax
+    return val
+
 # Version of Radial Sweep which is faster but produces a rough trace
 def radialSweepFast(procImg, limit, clockwise, armLength):
     dirDelta = circleDeltaPoints(limit[0], limit[1], int(armLength/2))
@@ -144,34 +144,39 @@ def radialSweepFast(procImg, limit, clockwise, armLength):
         tracerDirIdx = idxLeft # Left
 
     pointsFound = 0
-    maxPoints = 100
+    maxPoints = 50
     x = 0
     y = 0
     inPlaceRot = 0
     while True:
         points = np.append(points, tracerPos)
-        queueDrawCirc(tracerPos, (0,0,255), 1)
+        if debug:
+            queueDrawCirc(tracerPos, (0,0,255), 1)
         y = tracerPos[1] + dirDelta[tracerDirIdx][1]
         x = tracerPos[0] + dirDelta[tracerDirIdx][0]
-        if (y >= height) or (y < 0) or (x >= width) or (x < 0):
+        if (y + armLength >= height) or (y - armLength < 0) or (x + armLength >= width) or (x - armLength < 0):
             break
         if procImg[y,x] > 0:
             tracerPos = [x, y]
             inPlaceRot = 0
-            tracerDirIdx += quadrantSize * 2 + 2 # Same for both CW and CCW since its a 180 deg rotation
-            # TODO: It might be possible to rotate an extra 90 degrees but this might void the correctness
+            tracerDirIdx = int(wrapAround(tracerDirIdx + quadrantSize * 2 + 2, 0, len(dirDelta) - 1)) # Same for both CW and CCW since its a 180 deg rotation
+            # Rotate an extra 90 degrees to avoid checking the pixel previously marked with a point and to speed things up
+            # This is a heuristic so might break if there is a sharp turn into the direction opposite to "clockwise" argument
+            if not clockwise:
+                tracerDirIdx = int(wrapAround(tracerDirIdx + 1 + quadrantSize, 0, len(dirDelta) - 1))
+            else:
+                tracerDirIdx = int(wrapAround(tracerDirIdx - 1 - quadrantSize, 0, len(dirDelta) - 1))
             pointsFound += 1
         else:
+            # This shows all the points that were radially sweeped ;)
+            if debug:
+                queueDrawCirc([x,y], (155,155,0), 0)
             inPlaceRot += 1
         
         if not clockwise:
-            tracerDirIdx += 1
+            tracerDirIdx = int(wrapAround(tracerDirIdx + 1, 0, len(dirDelta) - 1))
         else:
-            if tracerDirIdx == 0:
-                tracerDirIdx = len(dirDelta) - 1 
-            else:
-                tracerDirIdx -= 1
-        tracerDirIdx %= len(dirDelta)
+            tracerDirIdx = int(wrapAround(tracerDirIdx - 1, 0, len(dirDelta) - 1))
 
         if inPlaceRot >= len(dirDelta)-1 or (pointsFound >= maxPoints):
             break

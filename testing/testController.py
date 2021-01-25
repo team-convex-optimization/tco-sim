@@ -65,8 +65,8 @@ def controller():
     centerNorm = 0
     centerNormOld = 0
     controlVariable = 0
-    pidKP = 0.055 # 0.15
-    pidKD = 2.1 # 4
+    pidKP = 0.055
+    pidKD = 2.1
     pidKI = 0.01
     steerFrac = 0.5
     pidProp = 0
