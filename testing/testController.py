@@ -1,10 +1,9 @@
 from testPerception import *
-from multiprocessing import shared_memory
 import posix_ipc as pipc
 from struct import Struct
 import os
 
-debug = False
+debug = True
 chStruct = Struct('Bf')
 controlStruct = Struct('BB{}'.format("{}s".format(chStruct.size) * 16))
 
@@ -109,12 +108,13 @@ def controller():
         if abs(steerFrac - 0.5) > 0.2:
             carState[2] = (int(1), float(0.52))
         else:
-            carState[2] = (int(1), float(0.56))
+            carState[2] = (int(1), float(0.54))
 
         writeShm(shm,sem, carState)
 
         # Draw points on original image
         if debug:
+            i = 0
             for pt in pointsLeft:
                 queueDrawCirc(pt, (0,0,255), 3)
             for pt in pointsRight:

@@ -16,8 +16,8 @@ typeDraw = np.dtype([('pos0', 'i4', 2), ('pos1', 'i4', 2), ('color', 'i4', 3), (
 queueLine = np.array([], dtype=typeDraw)
 queueCirc = np.array([], dtype=typeDraw)
 queueRect = np.array([], dtype=typeDraw)
-
 maskCar = np.array([[[190, height], [220, 180], [380, 180], [410, height]]], dtype=np.int32)
+
 kernelOnes2x2 = np.ones((2, 2), np.uint8)
 kernelSharpen = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
 
@@ -61,20 +61,22 @@ def findLimits(procImg):
     centerWidth = round(width / 2)
     centerHeight = round(height / 2)
 
-    pointLeftDefault = (0, centerHeight)
-    pointRightDefault = (width, centerHeight)
+    heinghtStart = centerHeight
+
+    pointLeftDefault = (0, heinghtStart)
+    pointRightDefault = (width, heinghtStart)
     pointLeft = pointLeftDefault
     pointRight = pointRightDefault
 
     delta = 0
-    offset = -20
+    offset = 0
     while delta < centerWidth:
         rightX = clamp(centerWidth - offset + delta, 0, width - 1)
         leftx = clamp(centerWidth + offset - delta, 0, width - 1)
-        if pointRight == pointRightDefault and procImg[centerHeight, rightX] > 0:
-            pointRight = (rightX, centerHeight)
-        if pointLeft == pointLeftDefault and procImg[centerHeight, leftx] > 0:
-            pointLeft = (leftx, centerHeight)
+        if pointRight == pointRightDefault and procImg[heinghtStart, rightX] > 0:
+            pointRight = (rightX, heinghtStart)
+        if pointLeft == pointLeftDefault and procImg[heinghtStart, leftx] > 0:
+            pointLeft = (leftx, heinghtStart)
         if pointRight != pointRightDefault and pointLeft != pointLeftDefault:
             break
         delta += 1
@@ -154,7 +156,7 @@ def radialSweepFast(procImg, limit, clockwise, armLength):
             queueDrawCirc(tracerPos, (0,0,255), 1)
         y = tracerPos[1] + dirDelta[tracerDirIdx][1]
         x = tracerPos[0] + dirDelta[tracerDirIdx][0]
-        if (y + armLength >= height) or (y - armLength < 0) or (x + armLength >= width) or (x - armLength < 0):
+        if (y + 10 >= height) or (y - 10 < 0) or (x + 10 >= width) or (x - 10 < 0):
             break
         if procImg[y,x] > 0:
             tracerPos = [x, y]
