@@ -1,12 +1,12 @@
 [gd_scene load_steps=13 format=2]
 
 [ext_resource path="res://car/car.tscn" type="PackedScene" id=1]
-[ext_resource path="res://tracks/track_test.tscn" type="PackedScene" id=2]
 [ext_resource path="res://root/mat_floor/mat_floor.tres" type="Material" id=3]
 [ext_resource path="res://root/root.gd" type="Script" id=4]
 [ext_resource path="res://root/mat_floor_smooth/mat_floor_smooth.tres" type="Material" id=5]
 [ext_resource path="res://root/noise.gd" type="Script" id=6]
 [ext_resource path="res://root/reset.gd" type="Script" id=7]
+[ext_resource path="res://tracks/track_gen.tscn" type="PackedScene" id=8]
 
 [sub_resource type="PhysicsMaterial" id=1]
 rough = true
@@ -49,7 +49,7 @@ skin = SubResource( 4 )
 material/0 = null
 
 [node name="Car" parent="." instance=ExtResource( 1 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.131428, 0.354999, 0.116497 )
+transform = Transform( -1, 0, -3.25841e-07, 0, 1, 0, 3.25841e-07, 0, -1, 0.131428, 0.354999, 0.116497 )
 
 [node name="DirectionalLight" type="DirectionalLight" parent="."]
 transform = Transform( -1.62921e-07, 0, -1, 0, 1, 0, 1, 0, -1.62921e-07, -28.7853, 4.50887, 0 )
@@ -69,8 +69,7 @@ transform = Transform( 1, 0, 0, 0, -1.62921e-07, 1, 0, -1, -1.62921e-07, -4.4896
 shadow_enabled = true
 spot_range = 20.0
 
-[node name="TrackTest" parent="." instance=ExtResource( 2 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0449934, 0.0137243, -0.0244455 )
+[node name="TrackGen" parent="." instance=ExtResource( 8 )]
 
 [node name="NoiseLayer1" type="Sprite" parent="."]
 visible = false
