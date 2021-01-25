@@ -4,7 +4,7 @@ import posix_ipc as pipc
 from struct import Struct
 import os
 
-debug = False
+debug = True
 chStruct = Struct('Bf')
 controlStruct = Struct('BB{}'.format("{}s".format(chStruct.size) * 16))
 
@@ -80,7 +80,9 @@ def controller():
         origImg = grabImage()
         procImg = preProcess(origImg)
         [pointsLeft, pointsRight] = limitsTrace(procImg)
-        centerX = round(((pointsRight[0] - pointsLeft[0]) / 2) + pointsLeft[0])
+
+        # Find normalized distance from car center to track center
+        centerX = round(((pointsRight[0][0] - pointsLeft[0][0]) / 2) + pointsLeft[0][0])
         centerNormOld = centerNorm
         centerNorm = (centerX - round(width/2)) / 200
         if centerNorm > 1.0:
@@ -95,16 +97,16 @@ def controller():
         pidVar = pidProp * pidKP
         pidVar += pidDeriv * pidKD
         pidVar += pidInteg * pidKI
-
-
         steerFrac += pidVar/2.0
         if steerFrac < 0.0:
             steerFrac = 0.0
         elif steerFrac > 1.0:
             steerFrac = 1.0
 
+        # Update steering channel
         carState[3] = (int(1), float(steerFrac))
 
+        # Update throttle channel
         if abs(steerFrac - 0.5) > 0.2:
             carState[2] = (int(1), float(0.52))
         else:

@@ -6,7 +6,7 @@ import math
 
 width = 600
 height = 338
-debug = False
+debug = True
 
 # Where the simulator window is (upper left corner)
 simWin = {"top": 64, "left": 0, "width": width, "height": height}
@@ -90,101 +90,77 @@ def findLimits(procImg):
     # search, another vertical search at the extremes is carried out.
     return [pointLeft, pointRight]
 
-# Returns square matrix centered at point (size needs to be odd)
-def submatAtPoint(procImg, point, size):
-    x, y = point
-    sizeH = math.floor(size / 2)
-    arr = procImg[y-sizeH:y+1+sizeH,x-sizeH:x+1+sizeH]
-    arr = np.reshape(arr, (size, size))
-    return arr
+def circleDeltaPoints(centerX, centerY, radius):
+    pointsQ4U = []
+    pointsQ4D = []
+    r = radius
 
-# 10.1007/978-3-642-93208-3 (Theo Pavlidis' Algorithm)
-# XXX: Fails to trace curves
-def limitTracePavlidis(procImg, limit):
-    global width, height
-    matFront = np.array([[-1,-1],[-1,0],[-1,1]], dtype=np.int16)
-    matLeft = np.array([[1,-1],[0,-1],[-1,-1]], dtype=np.int16)
-    matRight = np.array([[-1,1],[0,1],[1,1]], dtype=np.int16)
-    matRear = np.array([[1,1],[1,0],[1,-1]], dtype=np.int16)
-    tracerDir = 'front'
-    tracerPos = [limit[0], limit[1]]
-    procImg[limit[0]-1, limit[1]] = 0 # Ensure correct start pos condition
+    front = [[0, -r]]
+    left = [[-r, 0]]
+    right = [[r, 0]]
+    rear = [[0, r]]
 
-    i = 0
-    rotInPlace = 0
-    matDir = matFront
-    dirDelta = 'left'
-    while 1:
-        queueDrawCirc(tracerPos, (0,255,0), 1)
-        offX, offY = tracerPos
-        if tracerDir == 'front':
-            matDir = matFront
-            dirDelta = 'left'
-        elif tracerDir == 'left':
-            matDir = matLeft
-            dirDelta = 'rear'
-        elif tracerDir == 'right':
-            matDir = matRight
-            dirDelta = 'front'
-        elif tracerDir == 'rear':
-            matDir = matRear
-            dirDelta = 'right'
-        else:
-            raise ValueError
+    x = r
+    y = 0
+    p = 1 - r
+    while x > y:
+        y += 1
+    
+        if p <= 0:  
+            p = p + (2 * y) + 1
+        else:          
+            x -= 1
+            p = p + (2 * y) - (2 * x) + 1
         
-        p1 = [clamp(offY + matDir[0][0], 0, height - 1), clamp(offX + matDir[0][1], 0, width - 1)]
-        p2 = [clamp(offY + matDir[1][0], 0, height - 1), clamp(offX + matDir[1][1], 0, width - 1)]
-        p3 = [clamp(offY + matDir[2][0], 0, height - 1), clamp(offX + matDir[2][1], 0, width - 1)]
-        valP1 = procImg[p1[0], p1[1]]
-        valP2 = procImg[p2[0], p2[1]]
-        valP3 = procImg[p3[0], p3[1]]
-
-        if valP1 > 0:
-            rotInPlace = 0
-            tracerDir = dirDelta
-            tracerPos = [p1[1], p1[0]]
-        elif valP2 > 0:
-            rotInPlace = 0
-            tracerPos = [p2[1], p2[0]]
-        elif valP3 > 0:
-            rotInPlace = 0
-            tracerPos = [p3[1], p3[0]]
-        else:
-            rotInPlace += 1
-            tracerDir = dirDelta
-        
-        if (rotInPlace > 2) or (i >= 100):
+        if (x < y):
             break
-        else:
-            i += 1
-    return []
 
-def limitTraceRadialSweep(procImg, limit, clockwise=0):
-    # dirDelta = [Front, FrontLeft, Left, RearLeft, Rear, RearRight, Right, FrontRight]
-    dirDelta = np.array([[-1,0],[-1,-1],[0,-1],[1,-1],[1,0],[1,1],[0,1],[-1,1]]) 
+        pointsQ4U.append([x, y])
+        if x != y:
+            pointsQ4D.append([y, x])
+    pointsQ4D.reverse()
+    pointsQ4 = pointsQ4U + pointsQ4D
+    pointsQ1 = [[-pt[0], -pt[1]] for pt in pointsQ4]
+    pointsQ1.reverse()
+    pointsQ2 = [[pt[0], -pt[1]] for pt in pointsQ4]
+    pointsQ3 = [[-pt[0], pt[1]] for pt in pointsQ4]
+    pointsQ4.reverse()
+    points = front + pointsQ1 + left + pointsQ3 + rear + pointsQ4 + right + pointsQ2
+    return points
+
+# Version of Radial Sweep which is faster but produces a rough trace
+def radialSweepFast(procImg, limit, clockwise, armLength):
+    dirDelta = circleDeltaPoints(limit[0], limit[1], int(armLength/2))
+    quadrantSize = int((len(dirDelta) - 4) / 4) # This is always a whole number
+    idxLeft = quadrantSize + 1
+    idxRight = (3 * quadrantSize) + 3
+
     tracerPos = [limit[0], limit[1]]
     points = np.array([], dtype=np.uint16)
 
     if not clockwise:
-        tracerDirIdx = 6 # Right
+        tracerDirIdx = idxRight # Right
     else:
-        tracerDirIdx = 2 # Left
+        tracerDirIdx = idxLeft # Left
 
-    i = 0
+    pointsFound = 0
+    maxPoints = 100
     x = 0
     y = 0
     inPlaceRot = 0
-    while 1:
+    while True:
         points = np.append(points, tracerPos)
-        queueDrawCirc(tracerPos, (0,255,0), 1)
-        y = tracerPos[1] + dirDelta[tracerDirIdx][0]
-        y = clamp(y, 0, height - 1)
-        x = tracerPos[0] + dirDelta[tracerDirIdx][1]
-        x = clamp(x, 0, width - 1)
+        queueDrawCirc(tracerPos, (0,0,255), 1)
+        y = tracerPos[1] + dirDelta[tracerDirIdx][1]
+        x = tracerPos[0] + dirDelta[tracerDirIdx][0]
+        if (y >= height) or (y < 0) or (x >= width) or (x < 0):
+            break
         if procImg[y,x] > 0:
             tracerPos = [x, y]
             inPlaceRot = 0
-            tracerDirIdx += 4 # Same for both CW and CCW since its a 180 deg rotation
+            tracerDirIdx += quadrantSize * 2 + 2 # Same for both CW and CCW since its a 180 deg rotation
+            # TODO: It might be possible to rotate an extra 90 degrees but this might void the correctness
+            pointsFound += 1
         else:
             inPlaceRot += 1
         
@@ -197,11 +173,10 @@ def limitTraceRadialSweep(procImg, limit, clockwise=0):
                 tracerDirIdx -= 1
         tracerDirIdx %= len(dirDelta)
 
-        if inPlaceRot >= 7 or i > 600:
+        if inPlaceRot >= len(dirDelta)-1 or (pointsFound >= maxPoints):
             break
-        else:
-            i += 1
-    return points
+        
+    return np.reshape(points, (int(len(points) / 2),2))
 
 def preProcess(img):
     procImg = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -214,7 +189,7 @@ def preProcess(img):
     thresh = 300
     procImg = cv2.Canny(procImg, thresh, thresh*2, 3)
 
-    # Increase track limit line width
+    # Increase track limit line widthq
     procImg = cv2.dilate(procImg, kernelOnes2x2, iterations=3)
 
     # Mask car model
@@ -226,8 +201,8 @@ def limitsTrace(procImg):
     [trackLimitLeft, trackLimitRight] = findLimits(procImg)
 
     # Find all points on left and right track limits
-    pointsLeft = limitTraceRadialSweep(procImg, np.array(trackLimitLeft), 0)
-    pointsRight = limitTraceRadialSweep(procImg, np.array(trackLimitRight), 1)
+    pointsLeft = radialSweepFast(procImg, np.array(trackLimitLeft), 0, 20)
+    pointsRight = radialSweepFast(procImg, np.array(trackLimitRight), 1, 20)
 
     return [pointsLeft, pointsRight]
 

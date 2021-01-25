@@ -1,6 +1,6 @@
 extends VehicleBody
 
-const mode_autonomous = true
+const mode_autonomous = false
 
 #================ DRIVE MOTOR CONSTANTS AND METHODS =====================#
 const motor_kv =  2270 #rpm/V
@@ -66,7 +66,6 @@ func input_get_shmem():
 	if dat.size() > 0:
 		if typeof(dat[1]) != TYPE_BOOL:
 			servo_angle = -((dat[1] - 0.5) * 2) * servo_angle_max
-			print(dat[1])
 		else:
 			servo_angle = 0
 		if typeof(dat[0]) != TYPE_BOOL:
