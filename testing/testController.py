@@ -4,7 +4,7 @@ import posix_ipc as pipc
 from struct import Struct
 import os
 
-debug = True
+debug = False
 chStruct = Struct('Bf')
 controlStruct = Struct('BB{}'.format("{}s".format(chStruct.size) * 16))
 
@@ -58,8 +58,7 @@ def controller():
     shm = pipc.SharedMemory("tco_shmem_control")
     sem = pipc.Semaphore("tco_shmem_sem_control")
 
-    if debug:
-        cv2.namedWindow('win1')
+    cv2.namedWindow('win1')
 
     carState = carStateNull()
     centerNorm = 0
@@ -116,6 +115,10 @@ def controller():
 
         # Draw points on original image
         if debug:
+            for pt in pointsLeft:
+                queueDrawCirc(pt, (0,0,255), 3)
+            for pt in pointsRight:
+                queueDrawCirc(pt, (0,0,255), 3)
             queueDrawLine((round(width/2), round(height/2)), (centerX, 0), (0,0,255), 1)
             procImg = cv2.cvtColor(procImg, cv2.COLOR_GRAY2BGR)
             drawAllLine(procImg)

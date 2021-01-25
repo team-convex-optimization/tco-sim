@@ -6,7 +6,7 @@ import math
 
 width = 600
 height = 338
-debug = True
+debug = False
 
 # Where the simulator window is (upper left corner)
 simWin = {"top": 64, "left": 0, "width": width, "height": height}
@@ -67,7 +67,7 @@ def findLimits(procImg):
     pointRight = pointRightDefault
 
     delta = 0
-    offset = 0
+    offset = -20
     while delta < centerWidth:
         rightX = clamp(centerWidth - offset + delta, 0, width - 1)
         leftx = clamp(centerWidth + offset - delta, 0, width - 1)
