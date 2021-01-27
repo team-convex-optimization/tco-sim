@@ -28,7 +28,7 @@ const servo_weight = 0.045 #kg
 #================ STATE VARS =====================#
 var motor_v = 0
 var servo_angle = 0
-const servo_angle_max = 0.4
+const servo_angle_max = 0.45
 var shmem_access = null
 var shmem_accessible = false
 
