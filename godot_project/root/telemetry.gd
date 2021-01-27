@@ -1,7 +1,7 @@
 extends RichTextLabel
 
 # Declare member variables here. Examples:
-var enabled = true
+const enabled = true
 const update_interval = 0.1
 
 # Car state that will be updated every update_interval
