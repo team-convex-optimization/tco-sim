@@ -14,6 +14,7 @@
 #include "tco_shmem.h"
 
 int log_level = LOG_INFO | LOG_DEBUG | LOG_ERROR;
+static uint8_t log_initialized = 0;
 
 const godot_gdnative_core_api_struct *api = NULL;
 const godot_gdnative_ext_nativescript_api_struct *nativescript_api = NULL;
@@ -88,10 +89,15 @@ sem_t *control_data_sem;
 */
 void *shmem_constructor(godot_object *p_instance, void *p_method_data)
 {
-    if (log_init("sim", "./log.txt") != 0)
+    /* Avoid double init of logger (would fail while trying to reopen the opened log file) */
+    if (!log_initialized)
     {
-        api->godot_print_error("Failed to init logger", "shmem_constructor", "shmem_access.c", 94);
-        return (void *)EXIT_FAILURE;
+        if (log_init("libshmemaccess", "./log.txt") != 0)
+        {
+            api->godot_print_error("Failed to init logger", "shmem_constructor", "shmem_access.c", 94);
+            return (void *)EXIT_FAILURE;
+        }
+        log_initialized = 1;
     }
 
     if (shmem_map(TCO_SHMEM_NAME_CONTROL, TCO_SHMEM_SIZE_CONTROL, TCO_SHMEM_NAME_SEM_CONTROL, O_RDWR, (void **)&control_data, &control_data_sem) != 0)
@@ -101,7 +107,6 @@ void *shmem_constructor(godot_object *p_instance, void *p_method_data)
     }
 
     struct tco_shmem_data_control *shmem_data = (struct tco_shmem_data_control *)api->godot_alloc(TCO_SHMEM_SIZE_CONTROL);
-    memset(shmem_data, 0, TCO_SHMEM_SIZE_CONTROL);
     return shmem_data;
 }
 
@@ -130,38 +135,61 @@ godot_variant shmem_get_data(godot_object *p_instance, void *p_method_data,
     api->godot_variant_new_nil(&real_ret);
     api->godot_array_new(&ret);
 
-    if (control_data_sem == NULL)
+    if (control_data_sem == NULL || control_data == NULL)
+    {
+        log_info("Running constructor");
         shmem_constructor(p_instance, p_method_data);
+    }
+    if (control_data_sem == NULL || control_data == NULL)
+    {
+        api->godot_variant_new_bool(&real_ret, 0);
+        return real_ret;
+    }
 
-    /* Code to access the shmem space */
+    struct tco_shmem_data_control shmem_data_cpy = {0};
+
     if (sem_wait(control_data_sem) == -1)
     {
         log_error("sem_wait: %s", strerror(errno));
         return real_ret;
     }
     /* START: Critical section */
-    if (control_data->valid == 1)
+    if (control_data->valid)
     {
-        for (int i = 0; i < 16; i++)
-        { //Loop through channels. If they are active, add the float to the array. Else False.
-            godot_variant pulse_frac;
-            if (control_data->ch[i].active > 0)
-            {
-                api->godot_variant_new_real(&pulse_frac, control_data->ch[i].pulse_frac);
-            }
-            else
-            {
-                api->godot_variant_new_bool(&pulse_frac, GODOT_FALSE);
-            }
-            api->godot_array_push_back(&ret, &pulse_frac);
-
-        }
+        memcpy(&shmem_data_cpy, control_data, TCO_SHMEM_SIZE_CONTROL); /* Assumed never to fail */
     }
+    else
+    {
+        shmem_data_cpy.valid = 0;
+    }
+    
     /* END: Critical section */
     if (sem_post(control_data_sem) == -1)
     {
         log_error("sem_post: %s", strerror(errno));
         return real_ret;
+    }
+
+    if (shmem_data_cpy.valid)
+    {
+        /* 
+        Loop through channels. 
+        If they are active, append the pulse frac to the array, 
+        else append NILL. 
+        */
+        for (int i = 0; i < 16; i++)
+        {
+            godot_variant pulse_frac;
+            if (shmem_data_cpy.ch[i].active > 0)
+            {
+                api->godot_variant_new_real(&pulse_frac, shmem_data_cpy.ch[i].pulse_frac);
+            }
+            else
+            {
+                api->godot_variant_new_nil(&pulse_frac);
+            }
+            api->godot_array_push_back(&ret, &pulse_frac);
+        }
     }
 
     api->godot_variant_new_array(&real_ret, &ret);

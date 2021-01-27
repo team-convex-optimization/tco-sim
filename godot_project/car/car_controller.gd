@@ -1,6 +1,6 @@
 extends VehicleBody
 
-const mode_autonomous = false
+const mode_autonomous = true
 
 #================ DRIVE MOTOR CONSTANTS AND METHODS =====================#
 const motor_kv =  2270 #rpm/V
@@ -30,6 +30,7 @@ var motor_v = 0
 var servo_angle = 0
 const servo_angle_max = 0.4
 var shmem_access = null
+var shmem_accessible = false
 
 #================ RUNTIME METHODS ================#
 
@@ -63,16 +64,18 @@ func input_get():
 
 func input_get_shmem():
 	var dat = shmem_access.get_data()
-	if dat.size() > 0:
-		if typeof(dat[1]) != TYPE_BOOL:
+	if typeof(dat) != TYPE_BOOL and dat.size() > 0:
+		shmem_accessible = true
+		if typeof(dat[1]) == TYPE_REAL:
 			servo_angle = -((dat[1] - 0.5) * 2) * servo_angle_max
 		else:
 			servo_angle = 0
-		if typeof(dat[0]) != TYPE_BOOL:
+		if typeof(dat[0]) == TYPE_REAL:
 			motor_v = ((dat[0] - 0.5) * 2) * motor_v_max
 		else:
 			motor_v = 0
 	else:
+		shmem_accessible = false
 		servo_angle = 0
 		motor_v = 0
 
