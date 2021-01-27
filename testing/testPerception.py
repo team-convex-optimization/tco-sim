@@ -60,30 +60,39 @@ def findLimits(procImg):
     global width, height
     centerWidth = round(width / 2)
     centerHeight = round(height / 2)
+    cenPix = procImg[centerHeight, :]
 
-    heinghtStart = centerHeight
+    queueDrawCirc((centerWidth, centerHeight), (255,255,0), 3)
+    regions = []
 
-    pointLeftDefault = (0, heinghtStart)
-    pointRightDefault = (width, heinghtStart)
-    pointLeft = pointLeftDefault
-    pointRight = pointRightDefault
-
-    delta = 0
-    offset = 0
-    while delta < centerWidth:
-        rightX = clamp(centerWidth - offset + delta, 0, width - 1)
-        leftx = clamp(centerWidth + offset - delta, 0, width - 1)
-        if pointRight == pointRightDefault and procImg[heinghtStart, rightX] > 0:
-            pointRight = (rightX, heinghtStart)
-        if pointLeft == pointLeftDefault and procImg[heinghtStart, leftx] > 0:
-            pointLeft = (leftx, heinghtStart)
-        if pointRight != pointRightDefault and pointLeft != pointLeftDefault:
+    i = 0
+    blackRegionSize = 0
+    while True:
+        if (i != width - 1) and (cenPix[i] == 0):
+            blackRegionSize += 1
+        else:
+            # 210 is the approximate min visible width of track 
+            # (conservative, its more like 250 but rarely it's around 220)
+            if blackRegionSize >= 210:
+                regions.append((blackRegionSize, i))
+            blackRegionSize = 0
+        i += 1
+        if i > width - 1:
             break
-        delta += 1
-
-    # TODO: Finding these left and right points can be made more reliable if after the initial
-    # search, another vertical search at the extremes is carried out.
-    return [pointLeft, pointRight]
+    
+    if len(regions) > 0:
+        regMostCenter = 0
+        i = 1
+        while i < len(regions):
+            errorNew = max(abs(centerWidth - regions[i][1]), abs(regions[i][1] - regions[i][0] - centerWidth))
+            errorOld = max(abs(centerWidth - regions[regMostCenter][1]), abs(regions[regMostCenter][1] - regions[regMostCenter][0] - centerWidth))
+            # Min error to center of car
+            if errorNew < errorOld:
+                regMostCenter = i
+            i += 1
+        return [(regions[regMostCenter][1] - regions[regMostCenter][0],centerHeight), (regions[regMostCenter][1],centerHeight)]
+    else:
+        return [(centerWidth - 100,centerHeight), (centerWidth + 100,centerHeight)]
 
 def circleDeltaPoints(centerX, centerY, radius):
     pointsQ4U = []
@@ -146,7 +155,7 @@ def radialSweepFast(procImg, limit, clockwise, armLength):
         tracerDirIdx = idxLeft # Left
 
     pointsFound = 0
-    maxPoints = 50
+    maxPoints = 20
     x = 0
     y = 0
     inPlaceRot = 0
@@ -156,8 +165,11 @@ def radialSweepFast(procImg, limit, clockwise, armLength):
             queueDrawCirc(tracerPos, (0,0,255), 1)
         y = tracerPos[1] + dirDelta[tracerDirIdx][1]
         x = tracerPos[0] + dirDelta[tracerDirIdx][0]
+
+        # Stop at window borders
         if (y + 10 >= height) or (y - 10 < 0) or (x + 10 >= width) or (x - 10 < 0):
             break
+
         if procImg[y,x] > 0:
             tracerPos = [x, y]
             inPlaceRot = 0
@@ -182,7 +194,6 @@ def radialSweepFast(procImg, limit, clockwise, armLength):
 
         if inPlaceRot >= len(dirDelta)-1 or (pointsFound >= maxPoints):
             break
-        
     return np.reshape(points, (int(len(points) / 2),2))
 
 def preProcess(img):
@@ -190,14 +201,13 @@ def preProcess(img):
 
     # Sharpen edges
     procImg = cv2.filter2D(procImg, -1, kernelSharpen)
-    procImg = cv2.bitwise_not(procImg)
 
     # Find edges
     thresh = 300
     procImg = cv2.Canny(procImg, thresh, thresh*2, 3)
 
-    # Increase track limit line widthq
-    procImg = cv2.dilate(procImg, kernelOnes2x2, iterations=3)
+    # Increase track limit line widthq (this might not be necessary)
+    procImg = cv2.dilate(procImg, kernelOnes2x2, iterations=1)
 
     # Mask car model
     procImg = cv2.fillPoly(procImg, maskCar, (0, 0, 0))
@@ -208,8 +218,8 @@ def limitsTrace(procImg):
     [trackLimitLeft, trackLimitRight] = findLimits(procImg)
 
     # Find all points on left and right track limits
-    pointsLeft = radialSweepFast(procImg, np.array(trackLimitLeft), 0, 20)
-    pointsRight = radialSweepFast(procImg, np.array(trackLimitRight), 1, 20)
+    pointsLeft = radialSweepFast(procImg, trackLimitLeft, 0, 20)
+    pointsRight = radialSweepFast(procImg, trackLimitRight, 1, 20)
 
     return [pointsLeft, pointsRight]
 
