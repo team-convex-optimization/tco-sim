@@ -51,6 +51,15 @@ def writeShm(shm, sem, data):
         pass
     sem.release()
 
+def distToTurn(procImg, centerX, centerY):
+    dist = 0
+    while True:
+        if procImg[centerY - dist, centerX] > 0:
+            return dist
+        dist += 1
+        if dist < 0:
+            return dist
+
 def controller():
     global carState
 
@@ -60,17 +69,13 @@ def controller():
     cv2.namedWindow('win1')
 
     carState = carStateNull()
-    centerNorm = 0
-    centerNormOld = 0
+    crossTrackErr = 0
+    crossTrackErrOld = 0
+    crossTrackErrRate = 0
     controlVariable = 0
-    pidKP = 0.055
-    pidKD = 2.1
-    pidKI = 0.01
-    steerFrac = 0.5
-    pidProp = 0
-    pidDeriv = 0
-    pidInteg = 0
-    pidVar = 0
+    pidKP = 0.01
+    pidKD = 0.02
+    steerFrac = 0
     while True:
         last_time = time.time()
         carState[0] = 1
@@ -79,23 +84,16 @@ def controller():
         procImg = preProcess(origImg)
         [pointsLeft, pointsRight] = limitsTrace(procImg)
 
-        # Find normalized distance from car center to track center
-        centerX = round(((pointsRight[0][0] - pointsLeft[0][0]) / 2) + pointsLeft[0][0])
-        centerNormOld = centerNorm
-        centerNorm = (centerX - round(width/2)) / 200
-        if centerNorm > 1.0:
-            centerNorm = 1.0
-        elif centerNorm < -1.0:
-            centerNorm = -1.0
+        # Find cross track error
+        centerX = round(((pointsRight[min(len(pointsRight)-1, 10)][0] - pointsLeft[min(len(pointsLeft)-1, 10)][0]) / 2) + pointsLeft[0][0])
+        crossTrackErrOld = crossTrackErr
+        crossTrackErr = centerX - round(width/2)
+        crossTrackErrRate = crossTrackErr - crossTrackErrOld
         
         # PID
-        pidProp = centerNorm
-        pidDeriv = centerNorm - centerNormOld
-        pidInteg += pidInteg
-        pidVar = pidProp * pidKP
-        pidVar += pidDeriv * pidKD
-        pidVar += pidInteg * pidKI
-        steerFrac += pidVar/2.0
+        steerFrac = crossTrackErr * pidKP
+        steerFrac += crossTrackErrRate * pidKD
+        steerFrac = (steerFrac / 2.0) + 0.5 # To go from range -1 to 1 to range 0 to 1
         if steerFrac < 0.0:
             steerFrac = 0.0
         elif steerFrac > 1.0:
@@ -105,10 +103,10 @@ def controller():
         carState[3] = (int(1), float(steerFrac))
 
         # Update throttle channel
-        if abs(steerFrac - 0.5) > 0.2:
-            carState[2] = (int(1), float(0.52))
+        if distToTurn(procImg, centerX, round(height / 2)) < 150:
+            carState[2] = (int(1), float(0.58))
         else:
-            carState[2] = (int(1), float(0.54))
+            carState[2] = (int(1), float(0.7))
 
         writeShm(shm,sem, carState)
 
@@ -119,7 +117,7 @@ def controller():
                 queueDrawCirc(pt, (0,0,255), 3)
             for pt in pointsRight:
                 queueDrawCirc(pt, (0,0,255), 3)
-            queueDrawLine((round(width/2), round(height/2)), (centerX, 0), (0,0,255), 1)
+            queueDrawCirc((round((pointsRight[0][0] - pointsLeft[0][0])/2 + pointsLeft[0][0]), round(height/2)), (0,255,0), 3)
             procImg = cv2.cvtColor(procImg, cv2.COLOR_GRAY2BGR)
             drawAllLine(procImg)
             drawAllCirc(procImg)
