@@ -60,9 +60,11 @@ def findLimits(procImg):
     global width, height
     centerWidth = round(width / 2)
     centerHeight = round(height / 2)
-    cenPix = procImg[centerHeight, :]
 
-    queueDrawCirc((centerWidth, centerHeight), (255,255,0), 3)
+    heightSearch = centerHeight + 150
+    cenPix = procImg[heightSearch, :]
+
+    queueDrawCirc((centerWidth, heightSearch), (255,255,0), 3)
     regions = []
 
     i = 0
@@ -90,9 +92,11 @@ def findLimits(procImg):
             if errorNew < errorOld:
                 regMostCenter = i
             i += 1
-        return [(regions[regMostCenter][1] - regions[regMostCenter][0],centerHeight), (regions[regMostCenter][1],centerHeight)]
+        # (x - len - 1), where -1 is to ensure point is on limit
+        return [(clamp(regions[regMostCenter][1] - regions[regMostCenter][0] - 1, 0, width - 1),heightSearch), (regions[regMostCenter][1],heightSearch)]
     else:
-        return [(centerWidth - 100,centerHeight), (centerWidth + 100,centerHeight)]
+        # Fallback to limits at wheel offsets
+        return [(centerWidth - 100, heightSearch), (centerWidth + 100, heightSearch)]
 
 def circleDeltaPoints(centerX, centerY, radius):
     pointsQ4U = []
@@ -147,30 +151,37 @@ def radialSweepFast(procImg, limit, clockwise, armLength):
     idxRight = (3 * quadrantSize) + 3
 
     tracerPos = [limit[0], limit[1]]
-    points = np.array([], dtype=np.uint16)
+    # Handle case where limit is offscreen
+    while tracerPos[1] > 0:
+        if procImg[tracerPos[1], tracerPos[0]] > 0:
+            break
+        else:
+            tracerPos[1] -= 1
 
     if not clockwise:
         tracerDirIdx = idxRight # Right
     else:
         tracerDirIdx = idxLeft # Left
 
+    points = np.array([], dtype=np.uint16)
     pointsFound = 0
-    maxPoints = 20
+    maxPoints = 40
     x = 0
     y = 0
     inPlaceRot = 0
     while True:
-        points = np.append(points, tracerPos)
         if debug:
             queueDrawCirc(tracerPos, (0,0,255), 1)
         y = tracerPos[1] + dirDelta[tracerDirIdx][1]
         x = tracerPos[0] + dirDelta[tracerDirIdx][0]
 
         # Stop at window borders
-        if (y + 10 >= height) or (y - 10 < 0) or (x + 10 >= width) or (x - 10 < 0):
+        margin = 10
+        if (y + margin >= height) or (y - margin < 0) or (x >= width) or (x < 0):
             break
 
         if procImg[y,x] > 0:
+            points = np.append(points, tracerPos)
             tracerPos = [x, y]
             inPlaceRot = 0
             tracerDirIdx = int(wrapAround(tracerDirIdx + quadrantSize * 2 + 2, 0, len(dirDelta) - 1)) # Same for both CW and CCW since its a 180 deg rotation
@@ -194,7 +205,10 @@ def radialSweepFast(procImg, limit, clockwise, armLength):
 
         if inPlaceRot >= len(dirDelta)-1 or (pointsFound >= maxPoints):
             break
-    return np.reshape(points, (int(len(points) / 2),2))
+    if len(points) == 0:
+        np.array([tracerPos])
+    else:
+        return np.reshape(points, (int(len(points) / 2),2))
 
 def preProcess(img):
     procImg = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -206,7 +220,7 @@ def preProcess(img):
     thresh = 300
     procImg = cv2.Canny(procImg, thresh, thresh*2, 3)
 
-    # Increase track limit line widthq (this might not be necessary)
+    # Increase track limit line widthq
     procImg = cv2.dilate(procImg, kernelOnes2x2, iterations=1)
 
     # Mask car model
@@ -218,8 +232,10 @@ def limitsTrace(procImg):
     [trackLimitLeft, trackLimitRight] = findLimits(procImg)
 
     # Find all points on left and right track limits
-    pointsLeft = radialSweepFast(procImg, trackLimitLeft, 0, 20)
-    pointsRight = radialSweepFast(procImg, trackLimitRight, 1, 20)
+    pointsLeft = radialSweepFast(procImg, trackLimitLeft, 0, 26)
+    pointsRight = radialSweepFast(procImg, trackLimitRight, 1, 26)
+
+    print(pointsLeft)
 
     return [pointsLeft, pointsRight]
 
