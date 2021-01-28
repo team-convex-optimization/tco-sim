@@ -54,10 +54,10 @@ def writeShm(shm, sem, data):
 def distToTurn(procImg, centerX, centerY):
     dist = 0
     while True:
-        if procImg[centerY - dist, centerX] > 0:
+        if procImg[abs(centerY - dist), centerX] > 0:
             return dist
         dist += 1
-        if dist < 0:
+        if centerY - dist < 0:
             return dist
 
 def controller():
@@ -85,7 +85,7 @@ def controller():
         [pointsLeft, pointsRight] = limitsTrace(procImg)
 
         # Find cross track error
-        centerX = round(((pointsRight[min(len(pointsRight)-1, 10)][0] - pointsLeft[min(len(pointsLeft)-1, 10)][0]) / 2) + pointsLeft[0][0])
+        centerX = round(((pointsRight[0][0] - pointsLeft[0][0]) / 2) + pointsLeft[0][0])
         crossTrackErrOld = crossTrackErr
         crossTrackErr = centerX - round(width/2)
         crossTrackErrRate = crossTrackErr - crossTrackErrOld
@@ -106,18 +106,21 @@ def controller():
         if distToTurn(procImg, centerX, round(height / 2)) < 150:
             carState[2] = (int(1), float(0.58))
         else:
-            carState[2] = (int(1), float(0.7))
+            carState[2] = (int(1), float(1.0))
 
         writeShm(shm,sem, carState)
 
         # Draw points on original image
         if debug:
             i = 0
+            while i < min(len(pointsLeft), len(pointsRight)):
+                queueDrawLine(pointsLeft[i], pointsRight[i], (100,0,0), 1)
+                i += 1
             for pt in pointsLeft:
                 queueDrawCirc(pt, (0,0,255), 3)
             for pt in pointsRight:
                 queueDrawCirc(pt, (0,0,255), 3)
-            queueDrawCirc((round((pointsRight[0][0] - pointsLeft[0][0])/2 + pointsLeft[0][0]), round(height/2)), (0,255,0), 3)
+            queueDrawCirc((round((pointsRight[0][0] - pointsLeft[0][0])/2 + pointsLeft[0][0]), 319), (0,255,0), 3)
             procImg = cv2.cvtColor(procImg, cv2.COLOR_GRAY2BGR)
             drawAllLine(procImg)
             drawAllCirc(procImg)
