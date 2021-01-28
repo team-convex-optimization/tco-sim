@@ -205,8 +205,9 @@ def radialSweepFast(procImg, limit, clockwise, armLength):
 
         if inPlaceRot >= len(dirDelta)-1 or (pointsFound >= maxPoints):
             break
+
     if len(points) == 0:
-        np.array([tracerPos])
+        return np.array([tracerPos])
     else:
         return np.reshape(points, (int(len(points) / 2),2))
 
