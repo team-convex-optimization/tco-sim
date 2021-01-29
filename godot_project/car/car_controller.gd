@@ -1,6 +1,6 @@
 extends VehicleBody
 
-const mode_autonomous = false
+const mode_autonomous = true
 
 #================ DRIVE MOTOR CONSTANTS AND METHODS =====================#
 const motor_kv =  2270 #rpm/V

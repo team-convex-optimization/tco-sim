@@ -259,7 +259,7 @@ godot_variant shmem_write_data(godot_object *p_instance, void *p_method_data,
         return gnll;
     }
 
-    log_info("Shmem_write_data got values %d %f %f", num_wheels_on_track, motor_power, servo_angle);
+    // log_info("Shmem_write_data got values %d %f %f", num_wheels_on_track, motor_power, servo_angle);
 
     return gnll;
 }
