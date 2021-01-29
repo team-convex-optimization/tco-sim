@@ -237,25 +237,23 @@ godot_variant shmem_write_data(godot_object *p_instance, void *p_method_data,
     float servo_angle = (float)api->godot_variant_as_real(p_args[2]);
 
     /* Aquire semaphore */
-    if (sem_wait(control_data_sem) == -1)
+    if (sem_wait(sim_data_sem) == -1)
     {
         log_error("sem_wait: %s", strerror(errno));
         return gnll;
     }
     /* Write data */
-    if (control_data->valid == 0)
+    if (sim_data->valid == 0)
     {
         memset(sim_data, 0, TCO_SHMEM_SIZE_SIM);
         sim_data->valid = 1;
     }
-    // control_data->ch[channel].active = 1;
-    // control_data->ch[channel].pulse_frac = pulse_frac;
     sim_data->wheels_on_track = num_wheels_on_track;
     sim_data->motor_power = motor_power;
     sim_data->steering_angle = servo_angle;
     
     /* Release Semaphore */
-    if (sem_post(control_data_sem) == -1)
+    if (sem_post(sim_data_sem) == -1)
     {
         log_error("sem_post: %s", strerror(errno));
         return gnll;

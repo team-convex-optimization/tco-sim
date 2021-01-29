@@ -33,6 +33,18 @@ var shmem_access = null
 var shmem_accessible = false
 
 #================ RUNTIME METHODS ================#
+func count_wheels_on_track():
+	var wheelCount = 0
+	if(get_node("CarWheelFL").get_global_transform().origin[1] > 0.323):
+		 wheelCount+=1
+	if(get_node("CarWheelFR").get_global_transform().origin[1] > 0.323):
+		wheelCount+=1
+	if(get_node("CarWheelRL").get_global_transform().origin[1] > 0.323):
+		wheelCount+=1
+	if(get_node("CarWheelRR").get_global_transform().origin[1] > 0.323):
+		wheelCount+=1
+	return wheelCount
+	
 
 func input_get():
 	servo_angle = 0
@@ -61,7 +73,8 @@ func input_get():
 		
 	servo_angle = -clamp(servo_angle, -servo_angle_max, servo_angle_max)
 	motor_v = clamp(motor_v, -motor_v_max, motor_v_max)
-	shmem_access.write_data(0, motor_v, servo_angle)
+	var wheelCount = count_wheels_on_track()
+	shmem_access.write_data(wheelCount, motor_v, servo_angle)
 	
 
 func input_get_shmem():
@@ -80,7 +93,8 @@ func input_get_shmem():
 		shmem_accessible = false
 		servo_angle = 0
 		motor_v = 0
-	shmem_access.write_data(0, motor_v, servo_angle)
+	var wheelCount = count_wheels_on_track()
+	shmem_access.write_data(wheelCount, motor_v, servo_angle)
 	
 
 func _ready():
