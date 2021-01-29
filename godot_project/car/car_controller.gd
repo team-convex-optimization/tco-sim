@@ -103,6 +103,9 @@ func _ready():
 	set_brake(0.003) #the decceleration when no power given to motors TODO : MEASURE ME
 
 func _physics_process(delta):
+	if shmem_access.is_valid() != 1:
+		get_tree().reload_current_scene()
+		return
 	if mode_autonomous and (OS.get_name() == "X11"):
 		input_get_shmem()
 	else:

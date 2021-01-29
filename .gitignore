@@ -14,7 +14,5 @@ build/
 godot_project/lib_native/*.so
 
 testing/training/sim/libshmemaccess.so
-
 testing/training/sim/sim.pck
-
 testing/training/sim/sim.x86_64

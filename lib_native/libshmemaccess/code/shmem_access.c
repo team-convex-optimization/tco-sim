@@ -30,6 +30,9 @@ godot_variant shmem_get_data(godot_object *p_instance, void *p_method_data,
 godot_variant shmem_write_data(godot_object *p_instance, void *p_method_data,
                              void *p_user_data, int p_num_args, godot_variant **p_args);
 
+godot_variant shmem_is_valid(godot_object *p_instance, void *p_method_data,
+                             void *p_user_data, int p_num_args, godot_variant **p_args);
+
 /* GDNative initialization code */
 
 void GDN_EXPORT godot_gdnative_init(godot_gdnative_init_options *p_options)
@@ -76,6 +79,9 @@ void GDN_EXPORT godot_nativescript_init(void *p_handle)
     godot_instance_method write_data = {NULL, NULL, NULL};
     write_data.method = &shmem_write_data;
 
+    godot_instance_method is_valid = {NULL, NULL, NULL};
+    is_valid.method = &shmem_is_valid;
+
     godot_method_attributes attributes = {GODOT_METHOD_RPC_MODE_DISABLED};
 
     nativescript_api->godot_nativescript_register_method(p_handle, "Shmem", "get_data",
@@ -83,6 +89,9 @@ void GDN_EXPORT godot_nativescript_init(void *p_handle)
 
     nativescript_api->godot_nativescript_register_method(p_handle, "Shmem", "write_data",
                                                          attributes, write_data);
+
+    nativescript_api->godot_nativescript_register_method(p_handle, "Shmem", "is_valid",
+                                                         attributes, is_valid);
 }
 
 /**
@@ -245,8 +254,8 @@ godot_variant shmem_write_data(godot_object *p_instance, void *p_method_data,
     /* Write data */
     if (sim_data->valid == 0)
     {
-        memset(sim_data, 0, TCO_SHMEM_SIZE_SIM);
-        sim_data->valid = 1;
+        log_info("sim_data filed is marked as invalid.");
+        return gnll;
     }
     sim_data->wheels_on_track = num_wheels_on_track;
     sim_data->motor_power = motor_power;
@@ -259,7 +268,30 @@ godot_variant shmem_write_data(godot_object *p_instance, void *p_method_data,
         return gnll;
     }
 
-    // log_info("Shmem_write_data got values %d %f %f", num_wheels_on_track, motor_power, servo_angle);
-
     return gnll;
+}
+
+godot_variant shmem_is_valid(godot_object *p_instance, void *p_method_data,
+                             void *p_user_data, int p_num_args, godot_variant **p_args)
+{
+    godot_variant ret;
+    api->godot_variant_new_int(&ret, -1);
+    /* Aquire semaphore */
+    if (sem_wait(sim_data_sem) == -1)
+    {
+        log_error("sem_wait: %s", strerror(errno));
+        return ret;
+    }
+    /* read data */
+    int valid = (int)sim_data->valid;
+    sim_data->valid = (uint8_t) 1;
+    /* Release Semaphore */
+    if (sem_post(sim_data_sem) == -1)
+    {
+        log_error("sem_post: %s", strerror(errno));
+        return ret;
+    }
+
+    api->godot_variant_new_int(&ret, valid);
+    return ret;
 }
