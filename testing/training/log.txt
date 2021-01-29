@@ -1,0 +1,1 @@
+ Fri Jan 29 14:59:44 2021 [libshmemaccess - info] shmem has been destroyed
