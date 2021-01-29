@@ -3,7 +3,6 @@ import gym_tco
 
 import numpy as np
 import tensorflow as tf
-import tensorflow.keras.layers as kl
 
 # Globals
 env = None
