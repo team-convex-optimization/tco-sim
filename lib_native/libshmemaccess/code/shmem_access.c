@@ -27,6 +27,9 @@ void shmem_destructor(godot_object *p_instance, void *p_method_data, void *p_use
 godot_variant shmem_get_data(godot_object *p_instance, void *p_method_data,
                              void *p_user_data, int p_num_args, godot_variant **p_args);
 
+godot_variant shmem_write_data(godot_object *p_instance, void *p_method_data,
+                             void *p_user_data, int p_num_args, godot_variant **p_args);
+
 /* GDNative initialization code */
 
 void GDN_EXPORT godot_gdnative_init(godot_gdnative_init_options *p_options)
@@ -70,10 +73,16 @@ void GDN_EXPORT godot_nativescript_init(void *p_handle)
     godot_instance_method get_data = {NULL, NULL, NULL};
     get_data.method = &shmem_get_data;
 
+    godot_instance_method write_data = {NULL, NULL, NULL};
+    write_data.method = &shmem_write_data;
+
     godot_method_attributes attributes = {GODOT_METHOD_RPC_MODE_DISABLED};
 
     nativescript_api->godot_nativescript_register_method(p_handle, "Shmem", "get_data",
                                                          attributes, get_data);
+
+    nativescript_api->godot_nativescript_register_method(p_handle, "Shmem", "write_data",
+                                                         attributes, write_data);
 }
 
 /**
@@ -82,6 +91,9 @@ void GDN_EXPORT godot_nativescript_init(void *p_handle)
 
 struct tco_shmem_data_control *control_data;
 sem_t *control_data_sem;
+
+struct tco_shmem_data_sim *sim_data;
+sem_t *sim_data_sem;
 
 /**
  * @brief will map the shared memory and create the associated semaphore. Called by godot engine.
@@ -102,7 +114,14 @@ void *shmem_constructor(godot_object *p_instance, void *p_method_data)
 
     if (shmem_map(TCO_SHMEM_NAME_CONTROL, TCO_SHMEM_SIZE_CONTROL, TCO_SHMEM_NAME_SEM_CONTROL, O_RDWR, (void **)&control_data, &control_data_sem) != 0)
     {
-        log_error("Failed to map shared memory and associated semaphore");
+        log_error("Failed to map control shared memory and associated semaphore");
+        return (void *)EXIT_FAILURE;
+    }
+
+    if (shmem_map(TCO_SHMEM_NAME_SIM, TCO_SHMEM_SIZE_SIM, TCO_SHMEM_NAME_SEM_SIM, O_RDWR, (void **)&sim_data, &sim_data_sem) != 0) {
+        api->godot_print_error("Failed to init shmem_sim", "shmem_constructor", "shmem_access.c", 94);
+
+        log_error("Failed to map sim shared memory and associated semaphore");
         return (void *)EXIT_FAILURE;
     }
 
@@ -194,4 +213,55 @@ godot_variant shmem_get_data(godot_object *p_instance, void *p_method_data,
 
     api->godot_variant_new_array(&real_ret, &ret);
     return real_ret;
+}
+
+/* This function takes 3 arguments : 
+   number_of_wheels_on_track (cast to uint8_t)
+   motor_power (cast to float)
+   steering_angle (cast to float)
+*/
+godot_variant shmem_write_data(godot_object *p_instance, void *p_method_data,
+                             void *p_user_data, int p_num_args, godot_variant **p_args) 
+{
+    godot_variant gnll;
+    api->godot_variant_new_nil(&gnll);
+    if (p_num_args != 3)
+    {
+        log_error("Incorrect arg count to write to shmem. %d/3 given", p_num_args);
+        api->godot_print_warning("Not enough args to write to shmem", "shmem_write_data", "shmem_access.c", 219);
+        return gnll;
+    }
+
+    uint8_t num_wheels_on_track = (uint8_t)api->godot_variant_as_int(p_args[0]);
+    float motor_power = (float)api->godot_variant_as_real(p_args[1]);
+    float servo_angle = (float)api->godot_variant_as_real(p_args[2]);
+
+    /* Aquire semaphore */
+    if (sem_wait(control_data_sem) == -1)
+    {
+        log_error("sem_wait: %s", strerror(errno));
+        return gnll;
+    }
+    /* Write data */
+    if (control_data->valid == 0)
+    {
+        memset(sim_data, 0, TCO_SHMEM_SIZE_SIM);
+        sim_data->valid = 1;
+    }
+    // control_data->ch[channel].active = 1;
+    // control_data->ch[channel].pulse_frac = pulse_frac;
+    sim_data->wheels_on_track = num_wheels_on_track;
+    sim_data->motor_power = motor_power;
+    sim_data->steering_angle = servo_angle;
+    
+    /* Release Semaphore */
+    if (sem_post(control_data_sem) == -1)
+    {
+        log_error("sem_post: %s", strerror(errno));
+        return gnll;
+    }
+
+    log_info("Shmem_write_data got values %d %f %f", num_wheels_on_track, motor_power, servo_angle);
+
+    return gnll;
 }
