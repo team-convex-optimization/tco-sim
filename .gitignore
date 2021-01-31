@@ -12,3 +12,6 @@ export_presets.cfg
 # Ignore all build output
 build/
 godot_project/lib_native/*.so
+
+# Logger output
+log.txt
