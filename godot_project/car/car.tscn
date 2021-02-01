@@ -50,6 +50,7 @@ fov = 85.0
 
 [node name="CarWheelFR" type="VehicleWheel" parent="VehicleBody"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -0.95, 0.21, 1.093 )
+engine_force = -10.0
 use_as_traction = true
 use_as_steering = true
 wheel_roll_influence = 0.001
@@ -84,6 +85,7 @@ material/0 = ExtResource( 7 )
 
 [node name="CarWheelRL" type="VehicleWheel" parent="VehicleBody"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.95, 0.21, -0.922 )
+engine_force = 1.0
 use_as_traction = true
 wheel_roll_influence = 0.001
 wheel_radius = 0.325

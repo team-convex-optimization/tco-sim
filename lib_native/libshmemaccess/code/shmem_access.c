@@ -1,5 +1,3 @@
-#include <gdnative_api_struct.gen.h>
-
 #include <stdlib.h>
 
 #include <sys/mman.h>
@@ -13,80 +11,19 @@
 #include "tco_libd.h"
 #include "tco_shmem.h"
 
-int log_level = LOG_INFO | LOG_DEBUG | LOG_ERROR;
-static uint8_t log_initialized = 0;
+#include "shmem_access.h"
 
-const godot_gdnative_core_api_struct *api = NULL;
-const godot_gdnative_ext_nativescript_api_struct *nativescript_api = NULL;
+extern godot_gdnative_core_api_struct *api;
 
-void *shmem_constructor(godot_object *p_instance, void *p_method_data);
-void shmem_destructor(godot_object *p_instance, void *p_method_data, void *p_user_data);
+int log_level = LOG_INFO | LOG_ERROR;
+uint8_t log_initialized = 0;
 
-/* Define functions here */
+struct tco_shmem_data_control *data_control = NULL;
+sem_t *data_sem_control = NULL;
 
-godot_variant shmem_get_data(godot_object *p_instance, void *p_method_data,
-                             void *p_user_data, int p_num_args, godot_variant **p_args);
+struct tco_shmem_data_training *data_training = NULL;
+sem_t *data_sem_training = NULL;
 
-/* GDNative initialization code */
-
-void GDN_EXPORT godot_gdnative_init(godot_gdnative_init_options *p_options)
-{
-    api = p_options->api_struct;
-
-    /* Find extensions. */
-    for (int i = 0; i < api->num_extensions; i++)
-    {
-        switch (api->extensions[i]->type)
-        {
-        case GDNATIVE_EXT_NATIVESCRIPT:
-        {
-            nativescript_api = (godot_gdnative_ext_nativescript_api_struct *)api->extensions[i];
-        };
-        break;
-        default:
-            break;
-        }
-    }
-}
-
-void GDN_EXPORT godot_gdnative_terminate(godot_gdnative_terminate_options *p_options)
-{
-    api = NULL;
-    nativescript_api = NULL;
-}
-
-/* This function shows the Godot Engine which functions are available */
-void GDN_EXPORT godot_nativescript_init(void *p_handle)
-{
-    godot_instance_create_func create = {NULL, NULL, NULL};
-    create.create_func = &shmem_constructor;
-
-    godot_instance_destroy_func destroy = {NULL, NULL, NULL};
-    destroy.destroy_func = &shmem_destructor;
-
-    nativescript_api->godot_nativescript_register_class(p_handle, "Shmem", "Reference",
-                                                        create, destroy);
-
-    godot_instance_method get_data = {NULL, NULL, NULL};
-    get_data.method = &shmem_get_data;
-
-    godot_method_attributes attributes = {GODOT_METHOD_RPC_MODE_DISABLED};
-
-    nativescript_api->godot_nativescript_register_method(p_handle, "Shmem", "get_data",
-                                                         attributes, get_data);
-}
-
-/**
- * End of engine interfacing code and start of library code
-*/
-
-struct tco_shmem_data_control *control_data;
-sem_t *control_data_sem;
-
-/**
- * @brief will map the shared memory and create the associated semaphore. Called by godot engine.
- * @return a copy of the shmem_data. We only send "snapshots" of the shmem to the engine.
-*/
 void *shmem_constructor(godot_object *p_instance, void *p_method_data)
 {
     /* Avoid double init of logger (would fail while trying to reopen the opened log file) */
@@ -94,88 +31,86 @@ void *shmem_constructor(godot_object *p_instance, void *p_method_data)
     {
         if (log_init("libshmemaccess", "./log.txt") != 0)
         {
-            api->godot_print_error("Failed to init logger", "shmem_constructor", "shmem_access.c", 94);
-            return (void *)EXIT_FAILURE;
+            api->godot_print_error("Failed to init logger", __func__, __FILE__, __LINE__);
+            return NULL;
         }
         log_initialized = 1;
     }
 
-    if (shmem_map(TCO_SHMEM_NAME_CONTROL, TCO_SHMEM_SIZE_CONTROL, TCO_SHMEM_NAME_SEM_CONTROL, O_RDWR, (void **)&control_data, &control_data_sem) != 0)
+    if (shmem_map(TCO_SHMEM_NAME_CONTROL, TCO_SHMEM_SIZE_CONTROL, TCO_SHMEM_NAME_SEM_CONTROL, O_RDWR, (void **)&data_control, &data_sem_control) != 0)
     {
-        log_error("Failed to map shared memory and associated semaphore");
-        return (void *)EXIT_FAILURE;
+        log_error("Failed to map control shared memory and associated semaphore");
+        return NULL;
+    }
+
+    if (shmem_map(TCO_SHMEM_NAME_TRAINING, TCO_SHMEM_SIZE_TRAINING, TCO_SHMEM_NAME_SEM_TRAINING, O_RDWR, (void **)&data_training, &data_sem_training) != 0)
+    {
+        log_error("Failed to map training shared memory and associated semaphore");
+        return NULL;
     }
 
     struct tco_shmem_data_control *shmem_data = (struct tco_shmem_data_control *)api->godot_alloc(TCO_SHMEM_SIZE_CONTROL);
     return shmem_data;
 }
 
-/**
- * @brief will map the shared memory and create the associated semaphore. Called by godot engine.
-*/
 void shmem_destructor(godot_object *p_instance, void *p_method_data, void *p_user_data)
 {
     api->godot_free(p_user_data);
     munmap(0, TCO_SHMEM_SIZE_CONTROL);
-    sem_close(control_data_sem);
-    log_info("shmem has been destroyed");
+    sem_close(data_sem_control);
+    log_debug("Shmem has been destroyed");
 }
 
-/**
- * @brief will return a snapshot of the shmem space. Will block until the semaphore gives rights to
- * access the shmem space
- * @return snapshot of shmem space as a godot_type. There are 16 channels so there will be an array
- * of size 16 floats given. If an entry contains false, then it is inactive.
-*/
-godot_variant shmem_get_data(godot_object *p_instance, void *p_method_data,
-                             void *p_user_data, int p_num_args, godot_variant **p_args)
+godot_variant shmem_data_read(godot_object *p_instance, void *p_method_data,
+                              void *p_user_data, int p_num_args, godot_variant **p_args)
 {
-    godot_variant real_ret;
-    godot_array ret;
-    api->godot_variant_new_nil(&real_ret);
-    api->godot_array_new(&ret);
+    godot_variant ret_val;
+    godot_array data;
+    api->godot_variant_new_nil(&ret_val);
+    api->godot_array_new(&data);
 
-    if (control_data_sem == NULL || control_data == NULL)
+    /* If either pointer is NULL, it means the library needs to initialize */
+    if (data_sem_control == NULL || data_control == NULL)
     {
-        log_info("Running constructor");
+        log_debug("Running constructor");
         shmem_constructor(p_instance, p_method_data);
     }
-    if (control_data_sem == NULL || control_data == NULL)
+    /* Check if init was successful, if not return NILL */
+    if (data_sem_control == NULL || data_control == NULL)
     {
-        api->godot_variant_new_bool(&real_ret, 0);
-        return real_ret;
+        return ret_val;
     }
 
+    /* To minimize semaphore blocking time, we copy the data in shmem into this variable */
     struct tco_shmem_data_control shmem_data_cpy = {0};
 
-    if (sem_wait(control_data_sem) == -1)
+    if (sem_wait(data_sem_control) == -1)
     {
         log_error("sem_wait: %s", strerror(errno));
-        return real_ret;
+        return ret_val;
     }
     /* START: Critical section */
-    if (control_data->valid)
+    if (data_control->valid)
     {
-        memcpy(&shmem_data_cpy, control_data, TCO_SHMEM_SIZE_CONTROL); /* Assumed never to fail */
+        memcpy(&shmem_data_cpy, data_control, TCO_SHMEM_SIZE_CONTROL); /* Assumed to never fail */
     }
     else
     {
+        /* To prevent use of the shmem data which was never read */
         shmem_data_cpy.valid = 0;
     }
-    
     /* END: Critical section */
-    if (sem_post(control_data_sem) == -1)
+    if (sem_post(data_sem_control) == -1)
     {
         log_error("sem_post: %s", strerror(errno));
-        return real_ret;
+        return ret_val;
     }
 
     if (shmem_data_cpy.valid)
     {
         /* 
-        Loop through channels. 
-        If they are active, append the pulse frac to the array, 
-        else append NILL. 
+        Loop through channels. If they are active, append the pulse frac to the array, else append
+        NILL. 
         */
         for (int i = 0; i < 16; i++)
         {
@@ -188,10 +123,124 @@ godot_variant shmem_get_data(godot_object *p_instance, void *p_method_data,
             {
                 api->godot_variant_new_nil(&pulse_frac);
             }
-            api->godot_array_push_back(&ret, &pulse_frac);
+            api->godot_array_push_back(&data, &pulse_frac);
         }
     }
 
-    api->godot_variant_new_array(&real_ret, &ret);
-    return real_ret;
+    api->godot_variant_new_array(&ret_val, &data);
+    return ret_val;
+}
+
+/* TODO: Return a different value on failure and success, right now it's always NILL */
+godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data,
+                               void *p_user_data, int p_num_args, godot_variant **p_args)
+{
+    godot_variant nill;
+    api->godot_variant_new_nil(&nill);
+
+    /* If either pointer is NULL, it means the library needs to initialize */
+    if (data_sem_training == NULL || data_training == NULL)
+    {
+        log_debug("Running constructor");
+        shmem_constructor(p_instance, p_method_data);
+    }
+    /* Check if init was successful, if not return NILL */
+    if (data_sem_training == NULL || data_training == NULL)
+    {
+        return nill;
+    }
+
+    if (p_num_args != 7)
+    {
+        log_error("Incorrect arg count to write to training shmem. %d given, needed exactly 7", p_num_args);
+        return nill;
+    }
+
+    /* 'reset' is special since it needs to stay the same unless the engine explicitly calls another
+    function to reset the 'reset' field. */
+    uint8_t reset;
+
+    if (sem_wait(data_sem_training) == -1)
+    {
+        log_error("sem_wait: %s", strerror(errno));
+        return nill;
+    }
+    /* START: Critical section */
+    if (data_training->valid == 0)
+    {
+        reset = 0;
+    }
+    else
+    {
+        reset = data_training->reset;
+    }
+    /* END: Critical section */
+    if (sem_post(data_sem_training) == -1)
+    {
+        log_error("sem_post: %s", strerror(errno));
+        return nill;
+    }
+
+    /* Make godot variants more easily transformable to C types */
+    godot_pool_byte_array wheels_off_track_godot_arr = api->godot_variant_as_pool_byte_array(p_args[0]);
+    godot_pool_byte_array_read_access *wheels_off_track_godot_arr_access = api->godot_pool_byte_array_read(&wheels_off_track_godot_arr);
+
+    godot_vector3 pos_godot = api->godot_variant_as_vector3(p_args[5]);
+
+    godot_pool_byte_array video_godot_arr = api->godot_variant_as_pool_byte_array(p_args[6]);
+    godot_pool_byte_array_read_access *video_godot_arr_access = api->godot_pool_byte_array_read(&video_godot_arr);
+
+    /* Transform variants to C types */
+    const uint8_t valid = 1u;
+    const uint8_t *wheels_off_track = api->godot_pool_byte_array_read_access_ptr(wheels_off_track_godot_arr_access);
+    const uint8_t drifting = (uint8_t)api->godot_variant_as_int(p_args[1]);
+    const float speed = (float)api->godot_variant_as_real(p_args[2]);
+    const float steer = (float)api->godot_variant_as_real(p_args[3]);
+    const float motor = (float)api->godot_variant_as_real(p_args[4]);
+    const float pos[3] = {
+        api->godot_vector3_get_axis(&pos_godot, GODOT_VECTOR3_AXIS_X),
+        api->godot_vector3_get_axis(&pos_godot, GODOT_VECTOR3_AXIS_Y),
+        api->godot_vector3_get_axis(&pos_godot, GODOT_VECTOR3_AXIS_Z),
+    };
+    const uint8_t *video = api->godot_pool_byte_array_read_access_ptr(video_godot_arr_access);
+
+    /* Construct new contents of the shared memory */
+    struct tco_shmem_data_training data_training_cpy = {
+        .valid = valid,
+        .reset = reset,
+        .wheels_off_track = {0},
+        .drifting = drifting,
+        .speed = speed,
+        .steer = steer,
+        .motor = motor,
+        .pos = {0},
+        .video = {0},
+    };
+    /* These are assumed to never fail */
+    memcpy(&data_training_cpy.wheels_off_track, wheels_off_track, 4 * sizeof(uint8_t));
+    memcpy(&data_training_cpy.pos, pos, 3 * sizeof(float));
+    memcpy(&data_training_cpy.video, video, TCO_SIM_HEIGHT * TCO_SIM_WIDTH * sizeof(uint8_t));
+
+    if (sem_wait(data_sem_training) == -1)
+    {
+        log_error("sem_wait: %s", strerror(errno));
+        return nill;
+    }
+    /* START: Critical section */
+    /* Assumed to never fail */
+    memcpy(data_training, &data_training_cpy, TCO_SHMEM_SIZE_TRAINING);
+    /* END: Critical section */
+    if (sem_post(data_sem_training) == -1)
+    {
+        log_error("sem_post: %s", strerror(errno));
+        return nill;
+    }
+
+    /* Help Godot free all the unused memory */
+    api->godot_pool_byte_array_destroy(&wheels_off_track_godot_arr);
+    api->godot_pool_byte_array_read_access_destroy(wheels_off_track_godot_arr_access);
+    api->godot_pool_byte_array_destroy(&video_godot_arr);
+    api->godot_pool_byte_array_read_access_destroy(video_godot_arr_access);
+
+    return nill;
 }

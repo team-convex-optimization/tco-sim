@@ -1,6 +1,5 @@
 extends Sprite
 
-
 # Declare member variables here. Examples:
 const noiseUpdate = 0.5 #seconds
 var time_elapsed = 0
@@ -21,7 +20,7 @@ func _process(delta):
 	if (time_elapsed > noiseUpdate):
 		noise.seed = randi() + randOffset
 		var txt = ImageTexture.new()
-		var img = noise.get_image(550, 550)
+		var img = noise.get_image(32, 18)
 		txt.create_from_image(img)
 		set_texture(txt)
 		time_elapsed = 0

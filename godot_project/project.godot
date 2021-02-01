@@ -19,11 +19,18 @@ config/name="tco-sim"
 run/main_scene="res://root/root.tscn"
 config/icon="res://sim_icon.png"
 
+[debug]
+
+settings/fps/force_fps=240
+settings/stdout/print_fps=true
+
 [display]
 
-window/size/width=600
-window/size/height=338
+window/size/width=32
+window/size/height=18
 window/size/resizable=false
+window/vsync/use_vsync=false
+window/stretch/aspect="keep"
 
 [gdnative]
 
@@ -78,7 +85,7 @@ joy_steer_right={
 
 [physics]
 
-common/physics_fps=120
+common/physics_fps=240
 3d/physics_engine="Bullet"
 3d/active_soft_world=false
 

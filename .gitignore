@@ -9,7 +9,7 @@ export_presets.cfg
 # VSCode env
 .vscode/
 
-# Ignore all build output
+# All build output
 build/
 godot_project/lib_native/*.so
 
