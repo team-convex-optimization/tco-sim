@@ -112,10 +112,6 @@ def controller():
 
         # Draw points on original image
         if debug:
-            i = 0
-            while i < min(len(pointsLeft), len(pointsRight)):
-                queueDrawLine(pointsLeft[i], pointsRight[i], (100,0,0), 1)
-                i += 1
             for pt in pointsLeft:
                 queueDrawCirc(pt, (0,0,255), 3)
             for pt in pointsRight:

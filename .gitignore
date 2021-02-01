@@ -13,8 +13,5 @@ export_presets.cfg
 build/
 godot_project/lib_native/*.so
 
-# Exported sim which is used in training
-testing/training/gym_tco_sim/sim/
-
 # Logger output
 log.txt

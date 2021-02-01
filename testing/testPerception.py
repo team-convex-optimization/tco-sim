@@ -205,8 +205,9 @@ def radialSweepFast(procImg, limit, clockwise, armLength):
 
         if inPlaceRot >= len(dirDelta)-1 or (pointsFound >= maxPoints):
             break
+    
     if len(points) == 0:
-        np.array([tracerPos])
+        return np.array([tracerPos])
     else:
         return np.reshape(points, (int(len(points) / 2),2))
 
@@ -234,8 +235,6 @@ def limitsTrace(procImg):
     # Find all points on left and right track limits
     pointsLeft = radialSweepFast(procImg, trackLimitLeft, 0, 26)
     pointsRight = radialSweepFast(procImg, trackLimitRight, 1, 26)
-
-    print(pointsLeft)
 
     return [pointsLeft, pointsRight]
 
