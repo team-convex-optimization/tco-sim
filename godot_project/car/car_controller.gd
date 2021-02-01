@@ -1,6 +1,6 @@
 extends VehicleBody
 
-const mode_autonomous = true
+const mode_autonomous = false
 
 #================ DRIVE MOTOR CONSTANTS AND METHODS =====================#
 const motor_kv =  2270 #rpm/V
@@ -32,19 +32,24 @@ const servo_angle_max = 0.45
 var shmem_access = null
 var shmem_accessible = false
 
+#================ Wheels =========================#
+onready var nodeWheelFl = get_node("CarWheelFL")
+onready var nodeWheelFR = get_node("CarWheelFR")
+onready var nodeWheelRR = get_node("CarWheelRL")
+onready var nodeWheelRL = get_node("CarWheelRR")
+
 #================ RUNTIME METHODS ================#
 func count_wheels_on_track():
 	var wheelCount = 0
-	if(get_node("CarWheelFL").get_global_transform().origin[1] > 0.323):
+	if(nodeWheelFl.get_global_transform().origin[1] > 0.323):
 		 wheelCount+=1
-	if(get_node("CarWheelFR").get_global_transform().origin[1] > 0.323):
+	if(nodeWheelFR.get_global_transform().origin[1] > 0.323):
 		wheelCount+=1
-	if(get_node("CarWheelRL").get_global_transform().origin[1] > 0.323):
+	if(nodeWheelRR.get_global_transform().origin[1] > 0.323):
 		wheelCount+=1
-	if(get_node("CarWheelRR").get_global_transform().origin[1] > 0.323):
+	if(nodeWheelRL.get_global_transform().origin[1] > 0.323):
 		wheelCount+=1
 	return wheelCount
-	
 
 func input_get():
 	servo_angle = 0
@@ -74,8 +79,6 @@ func input_get():
 	servo_angle = -clamp(servo_angle, -servo_angle_max, servo_angle_max)
 	motor_v = clamp(motor_v, -motor_v_max, motor_v_max)
 	var wheelCount = count_wheels_on_track()
-	shmem_access.write_data(wheelCount, motor_v, servo_angle)
-	
 
 func input_get_shmem():
 	var dat = shmem_access.get_data()
@@ -94,8 +97,6 @@ func input_get_shmem():
 		servo_angle = 0
 		motor_v = 0
 	var wheelCount = count_wheels_on_track()
-	shmem_access.write_data(wheelCount, motor_v, servo_angle)
-	
 
 func _ready():
 	if OS.get_name() == "X11":
@@ -103,9 +104,6 @@ func _ready():
 	set_brake(0.003) #the decceleration when no power given to motors TODO : MEASURE ME
 
 func _physics_process(delta):
-	if shmem_access.is_valid() != 1:
-		get_tree().reload_current_scene()
-		return
 	if mode_autonomous and (OS.get_name() == "X11"):
 		input_get_shmem()
 	else:

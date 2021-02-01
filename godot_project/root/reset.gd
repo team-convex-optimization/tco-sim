@@ -1,6 +1,5 @@
 extends Button
 
-
 func _ready():
 	self.connect("pressed", self, "handle_press")
 
