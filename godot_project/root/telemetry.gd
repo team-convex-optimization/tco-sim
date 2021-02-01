@@ -65,4 +65,3 @@ func _process(delta):
 			str(rr_ontrack),
 			str(node_vehicle.shmem_accessible)
 		]
-

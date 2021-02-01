@@ -16,8 +16,9 @@ clang \
     -I ../../../godot_headers \
     -I ../lib/tco_libd/include \
     -I ../lib/tco_shmem \
-    ../code/shmem_access.c
-
+    -I ./code \
+    -D TRAINING \
+    ../code/*.c
 popd
 
 clang \

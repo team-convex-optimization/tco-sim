@@ -9,10 +9,12 @@ export_presets.cfg
 # VSCode env
 .vscode/
 
-# Ignore all build output
+# All build output
 build/
 godot_project/lib_native/*.so
 
-testing/training/sim/libshmemaccess.so
-testing/training/sim/sim.pck
-testing/training/sim/sim.x86_64
+# Exported sim which is used in training
+testing/training/gym_tco_sim/sim/
+
+# Logger output
+log.txt

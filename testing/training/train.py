@@ -1,5 +1,5 @@
 import gym
-import gym_tco
+import tco_gym
 
 import numpy as np
 import tensorflow as tf
