@@ -121,6 +121,5 @@ func _physics_process(delta):
 		var drifting = !bool(int(node_wheel_fl.get_skidinfo()) || int(node_wheel_fr.get_skidinfo()) || int(node_wheel_rl.get_skidinfo()) || int(node_wheel_rr.get_skidinfo()))
 		var speed = get_linear_velocity()
 		var pos = transform.origin
-		var video = get_viewport().get_texture()
-		video = (video.r + video.g + video.b) * (1/3)
+		var video = get_viewport().get_texture().get_data().convert(Image.FORMAT_L8)
 		shmem_access.data_write(wheels_off_track, drifting, speed, steer_frac, motor_frac, pos, video)

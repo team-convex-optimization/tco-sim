@@ -18,11 +18,11 @@ extern godot_gdnative_core_api_struct *api;
 int log_level = LOG_INFO | LOG_ERROR;
 uint8_t log_initialized = 0;
 
-struct tco_shmem_data_control *control_data;
-sem_t *control_data_sem;
+struct tco_shmem_data_control *data_control = NULL;
+sem_t *data_sem_control = NULL;
 
-struct tco_shmem_data_training *data_training;
-sem_t *data_sem_training;
+struct tco_shmem_data_training *data_training = NULL;
+sem_t *data_sem_training = NULL;
 
 void *shmem_constructor(godot_object *p_instance, void *p_method_data)
 {
@@ -37,7 +37,7 @@ void *shmem_constructor(godot_object *p_instance, void *p_method_data)
         log_initialized = 1;
     }
 
-    if (shmem_map(TCO_SHMEM_NAME_CONTROL, TCO_SHMEM_SIZE_CONTROL, TCO_SHMEM_NAME_SEM_CONTROL, O_RDWR, (void **)&control_data, &control_data_sem) != 0)
+    if (shmem_map(TCO_SHMEM_NAME_CONTROL, TCO_SHMEM_SIZE_CONTROL, TCO_SHMEM_NAME_SEM_CONTROL, O_RDWR, (void **)&data_control, &data_sem_control) != 0)
     {
         log_error("Failed to map control shared memory and associated semaphore");
         return NULL;
@@ -45,7 +45,7 @@ void *shmem_constructor(godot_object *p_instance, void *p_method_data)
 
     if (shmem_map(TCO_SHMEM_NAME_TRAINING, TCO_SHMEM_SIZE_TRAINING, TCO_SHMEM_NAME_SEM_TRAINING, O_RDWR, (void **)&data_training, &data_sem_training) != 0)
     {
-        log_error("Failed to map sim shared memory and associated semaphore");
+        log_error("Failed to map training shared memory and associated semaphore");
         return NULL;
     }
 
@@ -57,7 +57,7 @@ void shmem_destructor(godot_object *p_instance, void *p_method_data, void *p_use
 {
     api->godot_free(p_user_data);
     munmap(0, TCO_SHMEM_SIZE_CONTROL);
-    sem_close(control_data_sem);
+    sem_close(data_sem_control);
     log_debug("Shmem has been destroyed");
 }
 
@@ -70,13 +70,13 @@ godot_variant shmem_data_read(godot_object *p_instance, void *p_method_data,
     api->godot_array_new(&data);
 
     /* If either pointer is NULL, it means the library needs to initialize */
-    if (control_data_sem == NULL || control_data == NULL)
+    if (data_sem_control == NULL || data_control == NULL)
     {
         log_debug("Running constructor");
         shmem_constructor(p_instance, p_method_data);
     }
     /* Check if init was successful, if not return NILL */
-    if (control_data_sem == NULL || control_data == NULL)
+    if (data_sem_control == NULL || data_control == NULL)
     {
         return ret_val;
     }
@@ -84,15 +84,15 @@ godot_variant shmem_data_read(godot_object *p_instance, void *p_method_data,
     /* To minimize semaphore blocking time, we copy the data in shmem into this variable */
     struct tco_shmem_data_control shmem_data_cpy = {0};
 
-    if (sem_wait(control_data_sem) == -1)
+    if (sem_wait(data_sem_control) == -1)
     {
         log_error("sem_wait: %s", strerror(errno));
         return ret_val;
     }
     /* START: Critical section */
-    if (control_data->valid)
+    if (data_control->valid)
     {
-        memcpy(&shmem_data_cpy, control_data, TCO_SHMEM_SIZE_CONTROL); /* Assumed to never fail */
+        memcpy(&shmem_data_cpy, data_control, TCO_SHMEM_SIZE_CONTROL); /* Assumed to never fail */
     }
     else
     {
@@ -100,7 +100,7 @@ godot_variant shmem_data_read(godot_object *p_instance, void *p_method_data,
         shmem_data_cpy.valid = 0;
     }
     /* END: Critical section */
-    if (sem_post(control_data_sem) == -1)
+    if (sem_post(data_sem_control) == -1)
     {
         log_error("sem_post: %s", strerror(errno));
         return ret_val;
@@ -136,6 +136,18 @@ godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data,
 {
     godot_variant nill;
     api->godot_variant_new_nil(&nill);
+
+    /* If either pointer is NULL, it means the library needs to initialize */
+    if (data_sem_training == NULL || data_training == NULL)
+    {
+        log_debug("Running constructor");
+        shmem_constructor(p_instance, p_method_data);
+    }
+    /* Check if init was successful, if not return NILL */
+    if (data_sem_training == NULL || data_training == NULL)
+    {
+        return nill;
+    }
 
     if (p_num_args != 7)
     {
