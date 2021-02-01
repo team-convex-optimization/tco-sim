@@ -131,6 +131,7 @@ godot_variant shmem_data_read(godot_object *p_instance, void *p_method_data,
     return ret_val;
 }
 
+/* TODO: Return a different value on failure and success, right now it's always NILL */
 godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data,
                                void *p_user_data, int p_num_args, godot_variant **p_args)
 {

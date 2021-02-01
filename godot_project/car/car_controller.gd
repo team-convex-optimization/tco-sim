@@ -110,16 +110,17 @@ func _physics_process(delta):
 	set_steering(steer_frac)
 	set_engine_force((torque/0.0325)/1.8) # Force is (torque/moment)
 	
-	if shmem_accessible:
-		# Update shmem state
-		var wheels_off_track = [
-			node_wheel_fl.get_global_transform().origin[1] <= 0.323,
-			node_wheel_fr.get_global_transform().origin[1] <= 0.323,
-			node_wheel_rl.get_global_transform().origin[1] <= 0.323,
-			node_wheel_rr.get_global_transform().origin[1] <= 0.323,
-		]
-		var drifting = !bool(int(node_wheel_fl.get_skidinfo()) || int(node_wheel_fr.get_skidinfo()) || int(node_wheel_rl.get_skidinfo()) || int(node_wheel_rr.get_skidinfo()))
-		var speed = get_linear_velocity()
-		var pos = transform.origin
-		var video = get_viewport().get_texture().get_data().convert(Image.FORMAT_L8)
-		shmem_access.data_write(wheels_off_track, drifting, speed, steer_frac, motor_frac, pos, video)
+	# Update training shmem state
+	var wheels_off_track = [
+		node_wheel_fl.get_global_transform().origin[1] <= 0.323,
+		node_wheel_fr.get_global_transform().origin[1] <= 0.323,
+		node_wheel_rl.get_global_transform().origin[1] <= 0.323,
+		node_wheel_rr.get_global_transform().origin[1] <= 0.323,
+	]
+	var drifting = !bool(int(node_wheel_fl.get_skidinfo()) || int(node_wheel_fr.get_skidinfo()) || int(node_wheel_rl.get_skidinfo()) || int(node_wheel_rr.get_skidinfo()))
+	var speed = get_linear_velocity()
+	var pos = transform.origin
+	var video = get_viewport().get_texture().get_data()
+	video.convert(Image.FORMAT_L8) # To grayscale
+	video = video.get_data() # Convert image to a pool byte array
+	shmem_access.data_write(wheels_off_track, drifting, speed, steer_frac, motor_frac, pos, video)
