@@ -168,14 +168,30 @@ godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data,
         return nill;
     }
 
-    uint8_t valid = 1u;
-    uint8_t wheels_off_track[4] = {0};
-    uint8_t drifting = (uint8_t)api->godot_variant_as_int(p_args[1]);
-    float speed = (float)api->godot_variant_as_real(p_args[2]);
-    float steer = (float)api->godot_variant_as_real(p_args[3]);
-    float motor = (float)api->godot_variant_as_real(p_args[4]);
-    float pos[3] = {0};
-    uint8_t video[TCO_SIM_HEIGHT][TCO_SIM_WIDTH] = {0};
+    /* Make godot variants more easily transformable to C types */
+    godot_pool_byte_array wheels_off_track_godot_arr = api->godot_variant_as_pool_byte_array(p_args[0]);
+    godot_pool_byte_array_read_access *wheels_off_track_godot_arr_access = api->godot_pool_byte_array_read(&wheels_off_track_godot_arr);
+
+    godot_vector3 pos_godot = api->godot_variant_as_vector3(p_args[5]);
+
+    godot_pool_byte_array video_godot_arr = api->godot_variant_as_pool_byte_array(p_args[6]);
+    godot_pool_byte_array_read_access *video_godot_arr_access = api->godot_pool_byte_array_read(&video_godot_arr);
+
+    /* Transform variants to C types */
+    const uint8_t valid = 1u;
+    const uint8_t *wheels_off_track = api->godot_pool_byte_array_read_access_ptr(wheels_off_track_godot_arr_access);
+    const uint8_t drifting = (uint8_t)api->godot_variant_as_int(p_args[1]);
+    const float speed = (float)api->godot_variant_as_real(p_args[2]);
+    const float steer = (float)api->godot_variant_as_real(p_args[3]);
+    const float motor = (float)api->godot_variant_as_real(p_args[4]);
+    const float pos[3] = {
+        api->godot_vector3_get_axis(&pos_godot, GODOT_VECTOR3_AXIS_X),
+        api->godot_vector3_get_axis(&pos_godot, GODOT_VECTOR3_AXIS_Y),
+        api->godot_vector3_get_axis(&pos_godot, GODOT_VECTOR3_AXIS_Z),
+    };
+    const uint8_t *video = api->godot_pool_byte_array_read_access_ptr(video_godot_arr_access);
+
+    /* Construct new contents of the shared memory */
     struct tco_shmem_data_training data_training_cpy = {
         .valid = valid,
         .reset = reset,
@@ -187,6 +203,7 @@ godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data,
         .pos = {0},
         .video = {0},
     };
+    /* These are assumed to never fail */
     memcpy(&data_training_cpy.wheels_off_track, wheels_off_track, 4 * sizeof(uint8_t));
     memcpy(&data_training_cpy.pos, pos, 3 * sizeof(float));
     memcpy(&data_training_cpy.video, video, TCO_SIM_HEIGHT * TCO_SIM_WIDTH * sizeof(uint8_t));
@@ -197,6 +214,7 @@ godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data,
         return nill;
     }
     /* START: Critical section */
+    /* Assumed to never fail */
     memcpy(data_training, &data_training_cpy, TCO_SHMEM_SIZE_TRAINING);
     /* END: Critical section */
     if (sem_post(data_sem_training) == -1)
@@ -204,6 +222,12 @@ godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data,
         log_error("sem_post: %s", strerror(errno));
         return nill;
     }
+
+    /* Help Godot free all the unused memory */
+    api->godot_pool_byte_array_destroy(&wheels_off_track_godot_arr);
+    api->godot_pool_byte_array_read_access_destroy(wheels_off_track_godot_arr_access);
+    api->godot_pool_byte_array_destroy(&video_godot_arr);
+    api->godot_pool_byte_array_read_access_destroy(video_godot_arr_access);
 
     return nill;
 }

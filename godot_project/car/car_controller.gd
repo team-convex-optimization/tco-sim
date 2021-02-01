@@ -123,5 +123,4 @@ func _physics_process(delta):
 		var pos = transform.origin
 		var video = get_viewport().get_texture()
 		video = (video.r + video.g + video.b) * (1/3)
-		print_debug(video)
 		shmem_access.data_write(wheels_off_track, drifting, speed, steer_frac, motor_frac, pos, video)
