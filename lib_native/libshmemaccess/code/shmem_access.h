@@ -33,7 +33,15 @@ godot_variant shmem_data_read(godot_object *p_instance, void *p_method_data, voi
  * @param p_method_data For reusing one function for multiple methods. Unused.
  * @param p_user_data A pointer to a 'user_data' struct that gets passed to every function. Unused.
  * @param p_num_args Number of arguments passed in from GDScript
- * @param p_args Pointer to array of arguments. This function takes 9 arguments as defined in 'tco_shmem'.
+ * @param p_args Pointer to array of arguments. This function takes 7 arguments as defined in 'tco_shmem'.
+ * Args:
+ *     [0] = wheels_off_track[4]
+ *     [1] = drifting
+ *     [2] = speed
+ *     [3] = steer
+ *     [4] = motor
+ *     [5] = pos[3]
+ *     [6] = video[18][32]
  * @return Returns a Godot 'nill'
  */
 godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data, void *p_user_data,

@@ -1,8 +1,8 @@
 extends VehicleBody
 
-const mode_autonomous = false
+const mode_autonomous = true
 
-#================ DRIVE MOTOR CONSTANTS AND METHODS =====================#
+# Motor constants and methods
 const motor_kv =  2270 #rpm/V
 const motor_v_max = 7.4
 const motor_amp_max = 28
@@ -14,94 +14,89 @@ const motor_resistance = 2 * 3.14 * motor_frequency * motor_inductance
 func get_motor_current(voltage, resistance):
 	return voltage / resistance
 
-#Current in amps, Velocity_constant in KV
+# Current in amps, Velocity_constant in KV
 func get_motor_torque(current, velocity_constant):
 	return (8.3 * current) / velocity_constant
 
-#================ SERVO MOTOR CONSTANTS AND METHODS =====================#
-#TODO Ackerman steering for longer base
+# Servo motor constants
+# TODO: Ackerman steering
 const servo_speed = 0.08 #sec/60deg @ 6V (so it takes 0.04 seconds to full steer)
 const servo_torque = 9.3 #kgcm @ 6V
 const servo_max_voltage = 6
 const servo_weight = 0.045 #kg
 
-#================ STATE VARS =====================#
+# State vars
 var motor_v = 0
-var servo_angle = 0
-const servo_angle_max = 0.45
+var motor_frac = 0
+var steer_frac = 0
+const steer_frac_max = 0.45
 var shmem_access = null
 var shmem_accessible = false
 
-#================ Wheels =========================#
-onready var nodeWheelFl = get_node("CarWheelFL")
-onready var nodeWheelFR = get_node("CarWheelFR")
-onready var nodeWheelRR = get_node("CarWheelRL")
-onready var nodeWheelRL = get_node("CarWheelRR")
-
-#================ RUNTIME METHODS ================#
-func count_wheels_on_track():
-	var wheelCount = 0
-	if(nodeWheelFl.get_global_transform().origin[1] > 0.323):
-		 wheelCount+=1
-	if(nodeWheelFR.get_global_transform().origin[1] > 0.323):
-		wheelCount+=1
-	if(nodeWheelRR.get_global_transform().origin[1] > 0.323):
-		wheelCount+=1
-	if(nodeWheelRL.get_global_transform().origin[1] > 0.323):
-		wheelCount+=1
-	return wheelCount
+# References to nodes
+onready var node_wheel_fl = get_node("CarWheelFL")
+onready var node_wheel_fr = get_node("CarWheelFR")
+onready var node_wheel_rl = get_node("CarWheelRL")
+onready var node_wheel_rr = get_node("CarWheelRR")
 
 func input_get():
-	servo_angle = 0
-	motor_v = 0
+	steer_frac = 0
+	motor_frac = 0
 	if Input.is_action_pressed("steer_left"):
-		servo_angle += -1
+		steer_frac += -1
 	if Input.is_action_pressed("steer_right"):
-		servo_angle += 1
+		steer_frac += 1
 		
 	if Input.is_action_pressed("accelerate"):
-		motor_v = motor_v_max
+		motor_frac = motor_v_max
 	if Input.is_action_pressed("decelerate"):
-		motor_v -= motor_v_max
+		motor_frac -= motor_v_max
 		
 	if Input.is_action_pressed("joy_steer_left"):
-		servo_angle += -Input.get_action_strength("joy_steer_left")
+		steer_frac += -Input.get_action_strength("joy_steer_left")
 	if Input.is_action_pressed("joy_steer_right"):
-		servo_angle += Input.get_action_strength("joy_steer_right")
-	if abs(servo_angle) < 0.05: #will be ignored in ml
-		servo_angle = 0
+		steer_frac += Input.get_action_strength("joy_steer_right")
+	if abs(steer_frac) < 0.05: #will be ignored in ml
+		steer_frac = 0
 		
 	if Input.is_action_pressed("joy_accelerate"):
-		motor_v = Input.get_action_strength("joy_accelerate") * motor_v_max
+		motor_frac = Input.get_action_strength("joy_accelerate") * motor_v_max
 	if Input.is_action_pressed("joy_deccelerate"):
-		motor_v -= Input.get_action_strength("joy_deccelerate") * motor_v_max
+		motor_frac -= Input.get_action_strength("joy_deccelerate") * motor_v_max
 		
-	servo_angle = -clamp(servo_angle, -servo_angle_max, servo_angle_max)
-	motor_v = clamp(motor_v, -motor_v_max, motor_v_max)
-	var wheelCount = count_wheels_on_track()
+	steer_frac = -clamp(steer_frac, -steer_frac_max, steer_frac_max)
+	motor_frac = clamp(motor_frac, 0, 1)
+	if motor_frac == 0:
+		motor_v = 0
+	else:
+		motor_v = (1/motor_frac) * motor_v_max
 
 func input_get_shmem():
-	var dat = shmem_access.get_data()
-	if typeof(dat) != TYPE_BOOL and dat.size() > 0:
+	var dat = shmem_access.data_read()
+	if typeof(dat) != TYPE_NIL and len(dat) > 0:
 		shmem_accessible = true
 		if typeof(dat[1]) == TYPE_REAL:
-			servo_angle = -((dat[1] - 0.5) * 2) * servo_angle_max
+			steer_frac = -((dat[1] - 0.5) * 2) * steer_frac_max
 		else:
-			servo_angle = 0
+			steer_frac = 0
 		if typeof(dat[0]) == TYPE_REAL:
-			motor_v = ((dat[0] - 0.5) * 2) * motor_v_max
+			motor_frac = dat[0]
 		else:
-			motor_v = 0
+			motor_frac = 0
 	else:
 		shmem_accessible = false
-		servo_angle = 0
+		steer_frac = 0
+		motor_frac = 0
+	
+	if motor_frac == 0:
 		motor_v = 0
-	var wheelCount = count_wheels_on_track()
+	else:
+		motor_v = ((motor_frac - 0.5) * 2) * motor_v_max
 
 func _ready():
 	if OS.get_name() == "X11":
 		shmem_access = preload("res://lib_native/libshmemaccess.gdns").new()
-	set_brake(0.003) #the decceleration when no power given to motors TODO : MEASURE ME
+	set_brake(0.003) # The deceleration when no power is given to motors TODO: MEASURE ME
 
 func _physics_process(delta):
 	if mode_autonomous and (OS.get_name() == "X11"):
@@ -112,6 +107,21 @@ func _physics_process(delta):
 	var amp = get_motor_current(motor_v, motor_resistance)
 	var torque = get_motor_torque(amp, motor_kv)
 	
-	set_steering(servo_angle)
-	set_engine_force((torque/0.0325)/1.8) #force is (torque/moment) 
+	set_steering(steer_frac)
+	set_engine_force((torque/0.0325)/1.8) # Force is (torque/moment)
 	
+	if shmem_accessible:
+		# Update shmem state
+		var wheels_off_track = [
+			node_wheel_fl.get_global_transform().origin[1] <= 0.323,
+			node_wheel_fr.get_global_transform().origin[1] <= 0.323,
+			node_wheel_rl.get_global_transform().origin[1] <= 0.323,
+			node_wheel_rr.get_global_transform().origin[1] <= 0.323,
+		]
+		var drifting = !bool(int(node_wheel_fl.get_skidinfo()) || int(node_wheel_fr.get_skidinfo()) || int(node_wheel_rl.get_skidinfo()) || int(node_wheel_rr.get_skidinfo()))
+		var speed = get_linear_velocity()
+		var pos = transform.origin
+		var video = get_viewport().get_texture()
+		video = (video.r + video.g + video.b) * (1/3)
+		print_debug(video)
+		shmem_access.data_write(wheels_off_track, drifting, speed, steer_frac, motor_frac, pos, video)

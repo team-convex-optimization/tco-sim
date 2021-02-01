@@ -21,8 +21,8 @@ uint8_t log_initialized = 0;
 struct tco_shmem_data_control *control_data;
 sem_t *control_data_sem;
 
-struct tco_shmem_data_training *training_data;
-sem_t *training_data_sem;
+struct tco_shmem_data_training *data_training;
+sem_t *data_sem_training;
 
 void *shmem_constructor(godot_object *p_instance, void *p_method_data)
 {
@@ -43,7 +43,7 @@ void *shmem_constructor(godot_object *p_instance, void *p_method_data)
         return NULL;
     }
 
-    if (shmem_map(TCO_SHMEM_NAME_TRAINING, TCO_SHMEM_SIZE_TRAINING, TCO_SHMEM_NAME_SEM_TRAINING, O_RDWR, (void **)&training_data, &training_data_sem) != 0)
+    if (shmem_map(TCO_SHMEM_NAME_TRAINING, TCO_SHMEM_SIZE_TRAINING, TCO_SHMEM_NAME_SEM_TRAINING, O_RDWR, (void **)&data_training, &data_sem_training) != 0)
     {
         log_error("Failed to map sim shared memory and associated semaphore");
         return NULL;
@@ -64,10 +64,10 @@ void shmem_destructor(godot_object *p_instance, void *p_method_data, void *p_use
 godot_variant shmem_data_read(godot_object *p_instance, void *p_method_data,
                               void *p_user_data, int p_num_args, godot_variant **p_args)
 {
-    godot_variant real_ret;
-    godot_array ret;
-    api->godot_variant_new_nil(&real_ret);
-    api->godot_array_new(&ret);
+    godot_variant ret_val;
+    godot_array data;
+    api->godot_variant_new_nil(&ret_val);
+    api->godot_array_new(&data);
 
     /* If either pointer is NULL, it means the library needs to initialize */
     if (control_data_sem == NULL || control_data == NULL)
@@ -78,8 +78,7 @@ godot_variant shmem_data_read(godot_object *p_instance, void *p_method_data,
     /* Check if init was successful, if not return NILL */
     if (control_data_sem == NULL || control_data == NULL)
     {
-        api->godot_variant_new_nil(&real_ret);
-        return real_ret;
+        return ret_val;
     }
 
     /* To minimize semaphore blocking time, we copy the data in shmem into this variable */
@@ -88,7 +87,7 @@ godot_variant shmem_data_read(godot_object *p_instance, void *p_method_data,
     if (sem_wait(control_data_sem) == -1)
     {
         log_error("sem_wait: %s", strerror(errno));
-        return real_ret;
+        return ret_val;
     }
     /* START: Critical section */
     if (control_data->valid)
@@ -104,7 +103,7 @@ godot_variant shmem_data_read(godot_object *p_instance, void *p_method_data,
     if (sem_post(control_data_sem) == -1)
     {
         log_error("sem_post: %s", strerror(errno));
-        return real_ret;
+        return ret_val;
     }
 
     if (shmem_data_cpy.valid)
@@ -124,12 +123,12 @@ godot_variant shmem_data_read(godot_object *p_instance, void *p_method_data,
             {
                 api->godot_variant_new_nil(&pulse_frac);
             }
-            api->godot_array_push_back(&ret, &pulse_frac);
+            api->godot_array_push_back(&data, &pulse_frac);
         }
     }
 
-    api->godot_variant_new_array(&real_ret, &ret);
-    return real_ret;
+    api->godot_variant_new_array(&ret_val, &data);
+    return ret_val;
 }
 
 godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data,
@@ -138,59 +137,69 @@ godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data,
     godot_variant nill;
     api->godot_variant_new_nil(&nill);
 
-    if (p_num_args != 9)
+    if (p_num_args != 7)
     {
-        log_error("Incorrect arg count to write to training shmem. %d given, needed exactly 9", p_num_args);
+        log_error("Incorrect arg count to write to training shmem. %d given, needed exactly 7", p_num_args);
         return nill;
     }
 
-    /* Reset is special since it needs to stay the same unless the engine explicitly calls another
-    function to reset the 'reset' field xD */
+    /* 'reset' is special since it needs to stay the same unless the engine explicitly calls another
+    function to reset the 'reset' field. */
     uint8_t reset;
 
-    if (sem_wait(training_data_sem) == -1)
+    if (sem_wait(data_sem_training) == -1)
     {
         log_error("sem_wait: %s", strerror(errno));
         return nill;
     }
     /* START: Critical section */
-    if (training_data->valid == 0)
+    if (data_training->valid == 0)
     {
         reset = 0;
     }
     else
     {
-        reset = training_data->reset;
+        reset = data_training->reset;
     }
     /* END: Critical section */
-    if (sem_post(training_data_sem) == -1)
+    if (sem_post(data_sem_training) == -1)
     {
         log_error("sem_post: %s", strerror(errno));
         return nill;
     }
 
     uint8_t valid = 1u;
-    uint8_t wheels_off_track[4];
-    uint8_t drifting;
-    float speed;
-    float steer;
-    float motor;
-    float pos[3];
-    uint8_t video[TCO_SIM_HEIGHT][TCO_SIM_WIDTH];
-    // uint8_t num_wheels_on_track = (uint8_t)api->godot_variant_as_int(p_args[0]); float
-    // motor_power = (float)api->godot_variant_as_real(p_args[1]); float servo_angle =
-    // (float)api->godot_variant_as_real(p_args[2]);
+    uint8_t wheels_off_track[4] = {0};
+    uint8_t drifting = (uint8_t)api->godot_variant_as_int(p_args[1]);
+    float speed = (float)api->godot_variant_as_real(p_args[2]);
+    float steer = (float)api->godot_variant_as_real(p_args[3]);
+    float motor = (float)api->godot_variant_as_real(p_args[4]);
+    float pos[3] = {0};
+    uint8_t video[TCO_SIM_HEIGHT][TCO_SIM_WIDTH] = {0};
+    struct tco_shmem_data_training data_training_cpy = {
+        .valid = valid,
+        .reset = reset,
+        .wheels_off_track = {0},
+        .drifting = drifting,
+        .speed = speed,
+        .steer = steer,
+        .motor = motor,
+        .pos = {0},
+        .video = {0},
+    };
+    memcpy(&data_training_cpy.wheels_off_track, wheels_off_track, 4 * sizeof(uint8_t));
+    memcpy(&data_training_cpy.pos, pos, 3 * sizeof(float));
+    memcpy(&data_training_cpy.video, video, TCO_SIM_HEIGHT * TCO_SIM_WIDTH * sizeof(uint8_t));
 
-    if (sem_wait(training_data_sem) == -1)
+    if (sem_wait(data_sem_training) == -1)
     {
         log_error("sem_wait: %s", strerror(errno));
         return nill;
     }
     /* START: Critical section */
-    // training_data->wheels_o_track = num_wheels_on_track; training_data->motor_power =
-    // motor_power; training_data->steering_angle = servo_angle;
+    memcpy(data_training, &data_training_cpy, TCO_SHMEM_SIZE_TRAINING);
     /* END: Critical section */
-    if (sem_post(training_data_sem) == -1)
+    if (sem_post(data_sem_training) == -1)
     {
         log_error("sem_post: %s", strerror(errno));
         return nill;
