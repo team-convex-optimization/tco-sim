@@ -1,6 +1,10 @@
 extends VehicleBody
 
-const mode_autonomous = true
+# NOTE:
+# Libshmemaccess i.e. the interface to shared memory objects only works on 
+# linux hence the checks for 'OS.get_name() == "X11"'
+
+const mode_training = false
 
 # Motor constants and methods
 const motor_kv =  2270 #rpm/V
@@ -65,7 +69,7 @@ func input_get():
 		motor_frac -= Input.get_action_strength("joy_deccelerate") * motor_v_max
 		
 	steer_frac = -clamp(steer_frac, -steer_frac_max, steer_frac_max)
-	motor_frac = clamp(motor_frac, 0, 1)
+	motor_frac = clamp(motor_frac, -1, 1)
 	if motor_frac == 0:
 		motor_v = 0
 	else:
@@ -94,12 +98,54 @@ func input_get_shmem():
 		motor_v = ((motor_frac - 0.5) * 2) * motor_v_max
 
 func _ready():
-	if OS.get_name() == "X11":
+	if mode_training and OS.get_name() == "X11":
 		shmem_access = preload("res://lib_native/libshmemaccess.gdns").new()
 	set_brake(0.003) # The deceleration when no power is given to motors TODO: MEASURE ME
+	
+var delta_total = 0.0
+func _process(delta):
+	if mode_training and OS.get_name() == "X11":
+		var state = shmem_access.state_read()
+		if state > 0:
+			if state == 1:
+				delta_total += delta
+				if delta_total >= 1.0:
+					shmem_update()
+					shmem_access.state_reset()
+			elif state == 2:
+				get_tree().reload_current_scene()
+				shmem_access.state_reset()
+			else:
+				push_error("Unrecognized state in training shmem")
+				get_tree().quit()
+		else:
+			get_tree().paused = true
+	
+func shmem_update():
+	if OS.get_name() == "X11":
+		# Update training shmem state
+		var wheels_off_track = [
+			node_wheel_fl.get_global_transform().origin[1] <= 0.323,
+			node_wheel_fr.get_global_transform().origin[1] <= 0.323,
+			node_wheel_rl.get_global_transform().origin[1] <= 0.323,
+			node_wheel_rr.get_global_transform().origin[1] <= 0.323,
+		]
+		var drifting = !bool(int(node_wheel_fl.get_skidinfo()) || int(node_wheel_fr.get_skidinfo()) || int(node_wheel_rl.get_skidinfo()) || int(node_wheel_rr.get_skidinfo()))
+		
+		# Compute length of velocity vector perpendicular to forward direction of the car
+		var speed = -get_transform().basis.xform_inv(get_linear_velocity()).z / 100 # in meters/second
+		
+		# Global positon of the car
+		var pos = get_transform().origin
+		
+		var video = get_viewport().get_texture().get_data()
+		video.convert(Image.FORMAT_L8) # To grayscale
+		video = video.get_data() # Convert image to a pool byte array
+		
+		shmem_access.data_write(wheels_off_track, drifting, speed, pos, video)
 
 func _physics_process(delta):
-	if mode_autonomous and (OS.get_name() == "X11"):
+	if mode_training and (OS.get_name() == "X11"):
 		input_get_shmem()
 	else:
 		input_get()
@@ -109,18 +155,3 @@ func _physics_process(delta):
 	
 	set_steering(steer_frac)
 	set_engine_force((torque/0.0325)/1.8) # Force is (torque/moment)
-	
-	# Update training shmem state
-	var wheels_off_track = [
-		node_wheel_fl.get_global_transform().origin[1] <= 0.323,
-		node_wheel_fr.get_global_transform().origin[1] <= 0.323,
-		node_wheel_rl.get_global_transform().origin[1] <= 0.323,
-		node_wheel_rr.get_global_transform().origin[1] <= 0.323,
-	]
-	var drifting = !bool(int(node_wheel_fl.get_skidinfo()) || int(node_wheel_fr.get_skidinfo()) || int(node_wheel_rl.get_skidinfo()) || int(node_wheel_rr.get_skidinfo()))
-	var speed = get_linear_velocity()
-	var pos = transform.origin
-	var video = get_viewport().get_texture().get_data()
-	video.convert(Image.FORMAT_L8) # To grayscale
-	video = video.get_data() # Convert image to a pool byte array
-	shmem_access.data_write(wheels_off_track, drifting, speed, steer_frac, motor_frac, pos, video)

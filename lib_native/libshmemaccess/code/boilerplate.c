@@ -64,6 +64,12 @@ void GDN_EXPORT godot_nativescript_init(void *p_handle)
     godot_instance_method data_write = {NULL, NULL, NULL};
     data_write.method = &shmem_data_write;
 
+    godot_instance_method state_read = {NULL, NULL, NULL};
+    state_read.method = &shmem_state_read;
+
+    godot_instance_method state_reset = {NULL, NULL, NULL};
+    state_reset.method = &shmem_state_reset;
+
     godot_method_attributes attributes = {GODOT_METHOD_RPC_MODE_DISABLED};
 
     nativescript_api->godot_nativescript_register_method(p_handle, "Shmem", "data_read",
@@ -71,4 +77,10 @@ void GDN_EXPORT godot_nativescript_init(void *p_handle)
 
     nativescript_api->godot_nativescript_register_method(p_handle, "Shmem", "data_write",
                                                          attributes, data_write);
+
+    nativescript_api->godot_nativescript_register_method(p_handle, "Shmem", "state_read",
+                                                         attributes, state_read);
+
+    nativescript_api->godot_nativescript_register_method(p_handle, "Shmem", "state_reset",
+                                                         attributes, state_reset);
 }

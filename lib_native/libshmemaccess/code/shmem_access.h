@@ -21,6 +21,11 @@ void shmem_destructor(godot_object *p_instance, void *p_method_data, void *p_use
 
 /**
  * @brief Reads data from control data shared memory and will block until the semaphore is released
+ * @param p_instance Pointer to this function
+ * @param p_method_data For reusing one function for multiple methods. Unused.
+ * @param p_user_data A pointer to a 'user_data' struct that gets passed to every function. Unused.
+ * @param p_num_args Number of arguments passed in from GDScript
+ * @param p_args Pointer to array of arguments. This function takes no arguments.
  * @return Array of all 16 channels from control data shmem as a 'godot_type'. If a channel is not
  * active, it write a NILL at that index.
  */
@@ -28,12 +33,14 @@ godot_variant shmem_data_read(godot_object *p_instance, void *p_method_data, voi
                               int p_num_args, godot_variant **p_args);
 
 /**
- * @brief Takes an array containing all elements required to fill the training shared memory and updates it
+ * @brief Takes an array containing all elements required to fill the training shared memory and
+ * updates it
  * @param p_instance Pointer to this function
  * @param p_method_data For reusing one function for multiple methods. Unused.
  * @param p_user_data A pointer to a 'user_data' struct that gets passed to every function. Unused.
  * @param p_num_args Number of arguments passed in from GDScript
- * @param p_args Pointer to array of arguments. This function takes 7 arguments as defined in 'tco_shmem'.
+ * @param p_args Pointer to array of arguments. This function takes 7 arguments as defined in
+ * 'tco_shmem'.
  * Args:
  *     [0] = wheels_off_track[4]
  *     [1] = drifting
@@ -42,9 +49,35 @@ godot_variant shmem_data_read(godot_object *p_instance, void *p_method_data, voi
  *     [4] = motor
  *     [5] = pos[3]
  *     [6] = video[18][32]
- * @return Returns a Godot 'nill'
+ * @return Godot 'nill'
  */
 godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data, void *p_user_data,
                                int p_num_args, godot_variant **p_args);
+
+/**
+ * @brief Read the state byte from training shmem and return it.
+ * @param p_instance Pointer to this function
+ * @param p_method_data For reusing one function for multiple methods. Unused.
+ * @param p_user_data A pointer to a 'user_data' struct that gets passed to every function. Unused.
+ * @param p_num_args Number of arguments passed in from GDScript
+ * @param p_args Pointer to array of arguments. This function takes no arguments.
+ * @return =0 means 'stop', =1 means 'step', =2 means 'reset', =UINT8_MAX means shmem is not valid
+ */
+godot_variant shmem_state_read(godot_object *p_instance, void *p_method_data, void *p_user_data,
+                               int p_num_args, godot_variant **p_args);
+
+/* TODO: Return 0 on success and 1 on failure  */
+/**
+ * @brief Write a 0 to the state byte in training shmem indicating that the simulator finished
+ * performing any requested changes to the simulation state.
+ * @param p_instance Pointer to this function
+ * @param p_method_data For reusing one function for multiple methods. Unused.
+ * @param p_user_data A pointer to a 'user_data' struct that gets passed to every function. Unused.
+ * @param p_num_args Number of arguments passed in from GDScript
+ * @param p_args Pointer to array of arguments. This function takes no arguments.
+ * @return Godot 'nill'
+ */
+godot_variant shmem_state_reset(godot_object *p_instance, void *p_method_data, void *p_user_data,
+                                int p_num_args, godot_variant **p_args);
 
 #endif /* _SHMEM_ACCESS_H_ */
