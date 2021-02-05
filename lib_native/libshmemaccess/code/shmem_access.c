@@ -15,88 +15,117 @@
 
 extern godot_gdnative_core_api_struct *api;
 
-int log_level = LOG_INFO | LOG_ERROR;
-uint8_t log_initialized = 0;
-
-struct tco_shmem_data_control *data_control = NULL;
-sem_t *data_sem_control = NULL;
-
-struct tco_shmem_data_training *data_training = NULL;
-sem_t *data_sem_training = NULL;
-
-static int shmem_not_initialized()
+typedef struct user_data_t
 {
-    return data_sem_control == NULL || data_control == NULL || data_training == NULL || data_sem_training == NULL;
+    uint8_t log_initialized;
+    struct tco_shmem_data_control *data_control;
+    sem_t *data_sem_control;
+    struct tco_shmem_data_training *data_training;
+    sem_t *data_sem_training;
+} user_data_t;
+
+int log_level = LOG_INFO | LOG_ERROR;
+
+static int shmem_not_initialized(user_data_t *p_user_data)
+{
+    return p_user_data->data_sem_control == NULL ||
+           p_user_data->data_control == NULL ||
+           p_user_data->data_training == NULL ||
+           p_user_data->data_sem_training == NULL;
 }
 
 void *shmem_constructor(godot_object *p_instance, void *p_method_data)
 {
+    user_data_t *user_data = api->godot_alloc(sizeof(user_data_t));
+    memset(user_data, '\0', sizeof(user_data_t));
+
     /* Avoid double init of logger (would fail while trying to reopen the opened log file) */
-    if (!log_initialized)
+    if (!user_data->log_initialized)
     {
         if (log_init("libshmemaccess", "./log.txt") != 0)
         {
             api->godot_print_error("Failed to init logger", __func__, __FILE__, __LINE__);
             return NULL;
         }
-        log_initialized = 1;
+        user_data->log_initialized = 1;
     }
 
-    if (shmem_map(TCO_SHMEM_NAME_CONTROL, TCO_SHMEM_SIZE_CONTROL, TCO_SHMEM_NAME_SEM_CONTROL, O_RDWR, (void **)&data_control, &data_sem_control) != 0)
+    if (shmem_map(TCO_SHMEM_NAME_CONTROL, TCO_SHMEM_SIZE_CONTROL, TCO_SHMEM_NAME_SEM_CONTROL, O_RDWR, (void **)&(user_data->data_control), &(user_data->data_sem_control)) != 0)
     {
         log_error("Failed to map control shared memory and associated semaphore");
         return NULL;
     }
 
-    if (shmem_map(TCO_SHMEM_NAME_TRAINING, TCO_SHMEM_SIZE_TRAINING, TCO_SHMEM_NAME_SEM_TRAINING, O_RDWR, (void **)&data_training, &data_sem_training) != 0)
+    if (shmem_map(TCO_SHMEM_NAME_TRAINING, TCO_SHMEM_SIZE_TRAINING, TCO_SHMEM_NAME_SEM_TRAINING, O_RDWR, (void **)&(user_data->data_training), &(user_data->data_sem_training)) != 0)
     {
         log_error("Failed to map training shared memory and associated semaphore");
         return NULL;
     }
 
-    struct tco_shmem_data_control *shmem_data = (struct tco_shmem_data_control *)api->godot_alloc(TCO_SHMEM_SIZE_CONTROL);
-    return shmem_data;
+    return user_data;
 }
 
 void shmem_destructor(godot_object *p_instance, void *p_method_data, void *p_user_data)
 {
-    api->godot_free(p_user_data);
-    munmap(0, TCO_SHMEM_SIZE_CONTROL);
-    sem_close(data_sem_control);
-    log_debug("Shmem has been destroyed");
+    user_data_t *user_data = (user_data_t *)p_user_data;
+
+    if (munmap(user_data->data_control, TCO_SHMEM_SIZE_CONTROL) != 0)
+    {
+        log_error("Failed to unmap control shmem");
+    }
+    if (sem_close(user_data->data_sem_control) != 0)
+    {
+        log_error("Failed to close semaphor for control shmem");
+    }
+    if (munmap(user_data->data_training, TCO_SHMEM_SIZE_TRAINING) != 0)
+    {
+        log_error("Failed to unmap training shmem");
+    }
+    if (sem_close(user_data->data_sem_training) != 0)
+    {
+        log_error("Failed to close semaphor for training shmem");
+    }
+
+    log_debug("Libshmemaccess destroyed");
+    if (user_data->log_initialized)
+    {
+        if (log_deinit() != 0)
+        {
+            log_error("Failed to deinit the logger");
+        }
+        else
+        {
+            user_data->log_initialized = 0;
+        }
+    }
+    api->godot_free(user_data);
 }
 
 godot_variant shmem_data_read(godot_object *p_instance, void *p_method_data, void *p_user_data,
                               int p_num_args, godot_variant **p_args)
 {
-    godot_variant ret_val;
-    godot_array data;
-    api->godot_variant_new_nil(&ret_val);
-    api->godot_array_new(&data);
+    user_data_t *user_data = (user_data_t *)p_user_data;
+    godot_variant ret_failure;
+    api->godot_variant_new_int(&ret_failure, -1);
 
-    if (shmem_not_initialized())
+    if (shmem_not_initialized(user_data))
     {
-        log_debug("Running constructor");
-        shmem_constructor(p_instance, p_method_data);
-    }
-    /* Check if init was successful, if not return NILL */
-    if (shmem_not_initialized())
-    {
-        return ret_val;
+        log_error("Not initialized at call to 'shmem_data_read'");
+        return ret_failure;
     }
 
     /* To minimize semaphore blocking time, we copy the data in shmem into this variable */
     struct tco_shmem_data_control shmem_data_cpy = {0};
 
-    if (sem_wait(data_sem_control) == -1)
+    if (sem_wait(user_data->data_sem_control) == -1)
     {
         log_error("sem_wait: %s", strerror(errno));
-        return ret_val;
+        return ret_failure;
     }
     /* START: Critical section */
-    if (data_control->valid)
+    if (user_data->data_control->valid)
     {
-        memcpy(&shmem_data_cpy, data_control, TCO_SHMEM_SIZE_CONTROL); /* Assumed to never fail */
+        memcpy(&shmem_data_cpy, user_data->data_control, TCO_SHMEM_SIZE_CONTROL); /* Assumed to never fail */
     }
     else
     {
@@ -104,84 +133,88 @@ godot_variant shmem_data_read(godot_object *p_instance, void *p_method_data, voi
         shmem_data_cpy.valid = 0;
     }
     /* END: Critical section */
-    if (sem_post(data_sem_control) == -1)
+    if (sem_post(user_data->data_sem_control) == -1)
     {
         log_error("sem_post: %s", strerror(errno));
-        return ret_val;
+        return ret_failure;
     }
 
+    godot_pool_real_array data_ch_pool;
+    api->godot_pool_real_array_new(&data_ch_pool);
     if (shmem_data_cpy.valid)
     {
         /* 
         Loop through channels. If they are active, append the pulse frac to the array, else append
-        NILL. 
+        0.5. XXX: Setting channels to 0.5 by deault by not be okay.
         */
-        for (int i = 0; i < 16; i++)
+        for (uint8_t i = 0; i < 16; i++)
         {
-            godot_variant pulse_frac;
             if (shmem_data_cpy.ch[i].active > 0)
             {
-                api->godot_variant_new_real(&pulse_frac, shmem_data_cpy.ch[i].pulse_frac);
+                /* godot_real === float */
+                api->godot_pool_real_array_append(&data_ch_pool, shmem_data_cpy.ch[i].pulse_frac);
             }
             else
             {
-                api->godot_variant_new_nil(&pulse_frac);
+                api->godot_pool_real_array_append(&data_ch_pool, 0.5f);
             }
-            api->godot_array_push_back(&data, &pulse_frac);
         }
     }
 
-    api->godot_variant_new_array(&ret_val, &data);
-    return ret_val;
+    godot_variant data_ch_var;
+    api->godot_variant_new_pool_real_array(&data_ch_var, &data_ch_pool);
+    api->godot_variant_destroy(&ret_failure);
+    return data_ch_var;
 }
 
-/* TODO: Return a different value on failure and success, right now it's always NILL */
 godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data, void *p_user_data,
                                int p_num_args, godot_variant **p_args)
 {
-    godot_variant nill;
-    api->godot_variant_new_nil(&nill);
+    user_data_t *user_data = (user_data_t *)p_user_data;
+    godot_variant ret_failure;
+    godot_variant ret_success;
+    api->godot_variant_new_int(&ret_failure, -1);
+    api->godot_variant_new_int(&ret_success, 0);
 
-    if (shmem_not_initialized())
+    if (shmem_not_initialized(user_data))
     {
-        log_debug("Running constructor");
-        shmem_constructor(p_instance, p_method_data);
-    }
-    /* Check if init was successful, if not return NILL */
-    if (shmem_not_initialized())
-    {
-        return nill;
+        log_error("Not initialized at call to 'shmem_data_write'");
+        api->godot_variant_destroy(&ret_success);
+        return ret_failure;
     }
 
     if (p_num_args != 5)
     {
         log_error("Incorrect arg count to write to training shmem. %d given, needed exactly 5", p_num_args);
-        return nill;
+        api->godot_variant_destroy(&ret_success);
+        return ret_failure;
     }
 
     /* 'state' is special since it needs to stay the same unless the engine explicitly calls another
     function to reset the 'state' field. */
     uint8_t state;
 
-    if (sem_wait(data_sem_training) == -1)
+    if (sem_wait(user_data->data_sem_training) == -1)
     {
         log_error("sem_wait: %s", strerror(errno));
-        return nill;
+        api->godot_variant_destroy(&ret_success);
+        return ret_failure;
     }
     /* START: Critical section */
-    if (data_training->valid == 0)
+    if (user_data->data_training->valid == 0)
     {
         state = 0; /* By default simulation should run */
     }
     else
     {
-        state = data_training->state;
+        state = user_data->data_training->state;
     }
     /* END: Critical section */
-    if (sem_post(data_sem_training) == -1)
+    if (sem_post(user_data->data_sem_training) == -1)
     {
         log_error("sem_post: %s", strerror(errno));
-        return nill;
+        api->godot_variant_destroy(&ret_success);
+        return ret_failure;
     }
 
     /* Make godot variants more easily transformable to C types */
@@ -220,19 +253,21 @@ godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data, vo
     memcpy(&data_training_cpy.pos, pos, 3 * sizeof(float));
     memcpy(&data_training_cpy.video, video, TCO_SIM_HEIGHT * TCO_SIM_WIDTH * sizeof(uint8_t));
 
-    if (sem_wait(data_sem_training) == -1)
+    if (sem_wait(user_data->data_sem_training) == -1)
     {
         log_error("sem_wait: %s", strerror(errno));
-        return nill;
+        api->godot_variant_destroy(&ret_success);
+        return ret_failure;
     }
     /* START: Critical section */
     /* Assumed to never fail */
-    memcpy(data_training, &data_training_cpy, TCO_SHMEM_SIZE_TRAINING);
+    memcpy(user_data->data_training, &data_training_cpy, TCO_SHMEM_SIZE_TRAINING);
     /* END: Critical section */
-    if (sem_post(data_sem_training) == -1)
+    if (sem_post(user_data->data_sem_training) == -1)
     {
         log_error("sem_post: %s", strerror(errno));
-        return nill;
+        api->godot_variant_destroy(&ret_success);
+        return ret_failure;
     }
 
     /* Help Godot free all the unused memory */
@@ -241,96 +276,97 @@ godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data, vo
     api->godot_pool_byte_array_destroy(&video_godot_arr);
     api->godot_pool_byte_array_read_access_destroy(video_godot_arr_access);
 
-    return nill;
+    api->godot_variant_destroy(&ret_failure);
+    return ret_success;
 }
 
 /* TODO: Implement the 'read' and 'reset' methods as one method using 'p_method_data' */
 godot_variant shmem_state_read(godot_object *p_instance, void *p_method_data, void *p_user_data,
                                int p_num_args, godot_variant **p_args)
 {
-    godot_variant nill;
-    api->godot_variant_new_nil(&nill);
+    user_data_t *user_data = (user_data_t *)p_user_data;
+    godot_variant ret_failure;
+    api->godot_variant_new_int(&ret_failure, -1);
 
-    if (shmem_not_initialized())
+    if (shmem_not_initialized(user_data))
     {
-        log_debug("Running constructor");
-        shmem_constructor(p_instance, p_method_data);
-    }
-    /* Check if init was successful, if not return NILL */
-    if (shmem_not_initialized())
-    {
-        return nill;
+        log_error("Not initialized at call to 'shmem_state_read'");
+        return ret_failure;
     }
 
     if (p_num_args != 0)
     {
         log_error("Incorrect arg count to write to training shmem. %d given, needed exactly 0", p_num_args);
-        return nill;
+        return ret_failure;
     }
 
     uint8_t state;
-    if (sem_wait(data_sem_training) == -1)
+    if (sem_wait(user_data->data_sem_training) == -1)
     {
         log_error("sem_wait: %s", strerror(errno));
-        return nill;
+        return ret_failure;
     }
     /* START: Critical section */
-    if (data_training->valid)
+    if (user_data->data_training->valid)
     {
-        state = data_training->state;
+        state = user_data->data_training->state;
     }
     else
     {
         state = 0; /* By default simulation will be paused */
     }
     /* END: Critical section */
-    if (sem_post(data_sem_training) == -1)
+    if (sem_post(user_data->data_sem_training) == -1)
     {
         log_error("sem_post: %s", strerror(errno));
-        return nill;
+        return ret_failure;
     }
 
-    godot_variant ret;
-    api->godot_variant_new_uint(&ret, state);
-    return ret;
+    godot_variant state_var;
+    api->godot_variant_new_uint(&state_var, state);
+    api->godot_variant_destroy(&ret_failure);
+    return state_var;
 }
 
 godot_variant shmem_state_reset(godot_object *p_instance, void *p_method_data, void *p_user_data,
                                 int p_num_args, godot_variant **p_args)
 {
-    godot_variant nill;
-    api->godot_variant_new_nil(&nill);
+    user_data_t *user_data = (user_data_t *)p_user_data;
+    godot_variant ret_failure;
+    godot_variant ret_success;
+    api->godot_variant_new_int(&ret_failure, -1);
+    api->godot_variant_new_int(&ret_success, 0);
 
-    if (shmem_not_initialized())
+    if (shmem_not_initialized(user_data))
     {
-        log_debug("Running constructor");
-        shmem_constructor(p_instance, p_method_data);
-    }
-    /* Check if init was successful, if not return NILL */
-    if (shmem_not_initialized())
-    {
-        return nill;
+        log_error("Not initialized at call to 'shmem_state_reset'");
+        api->godot_variant_destroy(&ret_success);
+        return ret_failure;
     }
 
     if (p_num_args != 0)
     {
         log_error("Incorrect arg count to write to training shmem. %d given, needed exactly 0", p_num_args);
-        return nill;
+        api->godot_variant_destroy(&ret_success);
+        return ret_failure;
     }
 
-    if (sem_wait(data_sem_training) == -1)
+    if (sem_wait(user_data->data_sem_training) == -1)
     {
         log_error("sem_wait: %s", strerror(errno));
-        return nill;
+        api->godot_variant_destroy(&ret_success);
+        return ret_failure;
     }
     /* START: Critical section */
-    data_training->state = 0; /* Doesn't matter if memory is valid or not */
+    user_data->data_training->state = 0; /* Doesn't matter if memory is valid or not */
     /* END: Critical section */
-    if (sem_post(data_sem_training) == -1)
+    if (sem_post(user_data->data_sem_training) == -1)
     {
         log_error("sem_post: %s", strerror(errno));
-        return nill;
+        api->godot_variant_destroy(&ret_success);
+        return ret_failure;
     }
 
-    return nill;
+    api->godot_variant_destroy(&ret_failure);
+    return ret_success;
 }

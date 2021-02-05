@@ -4,7 +4,8 @@ extends VehicleBody
 # Libshmemaccess i.e. the interface to shared memory objects only works on 
 # linux hence the checks for 'OS.get_name() == "X11"'
 
-const mode_training = false
+const mode_training = true
+const time_step_length = 1.0/120.0 # seconds
 
 # Motor constants and methods
 const motor_kv =  2270 #rpm/V
@@ -95,9 +96,10 @@ func input_get_shmem():
 	if motor_frac == 0:
 		motor_v = 0
 	else:
-		motor_v = ((motor_frac - 0.5) * 2) * motor_v_max
+		motor_v = ((motor_frac - 0.5) * 2.0) * motor_v_max
 
 func _ready():
+	pause_mode = Node.PAUSE_MODE_PROCESS # To avoid pasuing '_process' when game is paused
 	if mode_training and OS.get_name() == "X11":
 		shmem_access = preload("res://lib_native/libshmemaccess.gdns").new()
 	set_brake(0.003) # The deceleration when no power is given to motors TODO: MEASURE ME
@@ -108,13 +110,16 @@ func _process(delta):
 		var state = shmem_access.state_read()
 		if state > 0:
 			if state == 1:
+				get_tree().paused = false
 				delta_total += delta
-				if delta_total >= 1.0:
-					shmem_update()
+				if delta_total >= time_step_length:
+					delta_total = 0.0;
 					shmem_access.state_reset()
+					shmem_update()
 			elif state == 2:
 				get_tree().reload_current_scene()
 				shmem_access.state_reset()
+				shmem_update()
 			else:
 				push_error("Unrecognized state in training shmem")
 				get_tree().quit()
@@ -139,6 +144,7 @@ func shmem_update():
 		var pos = get_transform().origin
 		
 		var video = get_viewport().get_texture().get_data()
+		video.flip_y()
 		video.convert(Image.FORMAT_L8) # To grayscale
 		video = video.get_data() # Convert image to a pool byte array
 		

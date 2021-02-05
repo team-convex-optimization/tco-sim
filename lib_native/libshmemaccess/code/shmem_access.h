@@ -7,7 +7,9 @@
  * @brief Maps shared memory into process memory and gets a reference to the associated semaphore
  * @param p_instance Pointer to this function
  * @param p_method_data For reusing one function for multiple methods. Unused.
- * @return Pointer to 
+ * @note When something went wrong, Godot should print an error like "p_ptr == __null" indicating
+ * that the user_data has not be allocated.
+ * @return Pointer to user_data on success and NULL on failure
  */
 void *shmem_constructor(godot_object *p_instance, void *p_method_data);
 
@@ -15,7 +17,8 @@ void *shmem_constructor(godot_object *p_instance, void *p_method_data);
  * @brief Unmaps shared memory and closes the instance to the semaphore
  * @param p_instance Pointer to this function
  * @param p_method_data For reusing one function for multiple methods. Unused.
- * @param p_user_data A pointer to a 'user_data' struct that gets passed to every function. Unused.
+ * @param p_user_data A pointer to a 'user_data' struct that gets passed to every function and
+ * contains all Shmem object info.
  */
 void shmem_destructor(godot_object *p_instance, void *p_method_data, void *p_user_data);
 
@@ -23,11 +26,12 @@ void shmem_destructor(godot_object *p_instance, void *p_method_data, void *p_use
  * @brief Reads data from control data shared memory and will block until the semaphore is released
  * @param p_instance Pointer to this function
  * @param p_method_data For reusing one function for multiple methods. Unused.
- * @param p_user_data A pointer to a 'user_data' struct that gets passed to every function. Unused.
+ * @param p_user_data A pointer to a 'user_data' struct that gets passed to every function and
+ * contains all Shmem object info.
  * @param p_num_args Number of arguments passed in from GDScript
  * @param p_args Pointer to array of arguments. This function takes no arguments.
- * @return Array of all 16 channels from control data shmem as a 'godot_type'. If a channel is not
- * active, it write a NILL at that index.
+ * @return Godot variant array of all 16 channels from control data shmem on success and -1 on
+ * failure.
  */
 godot_variant shmem_data_read(godot_object *p_instance, void *p_method_data, void *p_user_data,
                               int p_num_args, godot_variant **p_args);
@@ -37,19 +41,18 @@ godot_variant shmem_data_read(godot_object *p_instance, void *p_method_data, voi
  * updates it
  * @param p_instance Pointer to this function
  * @param p_method_data For reusing one function for multiple methods. Unused.
- * @param p_user_data A pointer to a 'user_data' struct that gets passed to every function. Unused.
+ * @param p_user_data A pointer to a 'user_data' struct that gets passed to every function and
+ * contains all Shmem object info.
  * @param p_num_args Number of arguments passed in from GDScript
- * @param p_args Pointer to array of arguments. This function takes 7 arguments as defined in
+ * @param p_args Pointer to array of arguments. This function takes 5 arguments as defined in
  * 'tco_shmem'.
  * Args:
  *     [0] = wheels_off_track[4]
  *     [1] = drifting
  *     [2] = speed
- *     [3] = steer
- *     [4] = motor
- *     [5] = pos[3]
- *     [6] = video[18][32]
- * @return Godot 'nill'
+ *     [3] = pos[3]
+ *     [4] = video[18][32]
+ * @return Godot variant 0 on success and -1 on failure
  */
 godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data, void *p_user_data,
                                int p_num_args, godot_variant **p_args);
@@ -58,10 +61,11 @@ godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data, vo
  * @brief Read the state byte from training shmem and return it.
  * @param p_instance Pointer to this function
  * @param p_method_data For reusing one function for multiple methods. Unused.
- * @param p_user_data A pointer to a 'user_data' struct that gets passed to every function. Unused.
+ * @param p_user_data A pointer to a 'user_data' struct that gets passed to every function and
+ * contains all Shmem object info.
  * @param p_num_args Number of arguments passed in from GDScript
  * @param p_args Pointer to array of arguments. This function takes no arguments.
- * @return =0 means 'stop', =1 means 'step', =2 means 'reset', =UINT8_MAX means shmem is not valid
+ * @return On success: 0 means 'stop', 1 means 'step', 2 means 'reset', and on failure -1
  */
 godot_variant shmem_state_read(godot_object *p_instance, void *p_method_data, void *p_user_data,
                                int p_num_args, godot_variant **p_args);
@@ -72,10 +76,11 @@ godot_variant shmem_state_read(godot_object *p_instance, void *p_method_data, vo
  * performing any requested changes to the simulation state.
  * @param p_instance Pointer to this function
  * @param p_method_data For reusing one function for multiple methods. Unused.
- * @param p_user_data A pointer to a 'user_data' struct that gets passed to every function. Unused.
+ * @param p_user_data A pointer to a 'user_data' struct that gets passed to every function and
+ * contains all Shmem object info.
  * @param p_num_args Number of arguments passed in from GDScript
  * @param p_args Pointer to array of arguments. This function takes no arguments.
- * @return Godot 'nill'
+ * @return Godot variant 0 on success and -1 on failure
  */
 godot_variant shmem_state_reset(godot_object *p_instance, void *p_method_data, void *p_user_data,
                                 int p_num_args, godot_variant **p_args);
