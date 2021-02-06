@@ -12,7 +12,7 @@ setup(
     description="OpenAI gym environment which uses the godot simulator",
     author="Team Convex Optimization",
     packages=find_packages(),
-    install_requires=['gym'],
+    install_requires=['gym', 'numpy', 'posix-ipc', 'opencv-python'],
     long_description=long_description,
     classifiers=[
         "Programming Language :: Python",

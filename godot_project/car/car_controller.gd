@@ -6,6 +6,11 @@ extends VehicleBody
 
 const mode_training = true
 const time_step_length = 1.0/120.0 # seconds
+const time_reset_settle = 1.0 # seconds
+# Used to step and reset
+var delta_total = 0.0
+var resetting = false
+var reset_transform
 
 # Motor constants and methods
 const motor_kv =  2270 #rpm/V
@@ -44,6 +49,10 @@ onready var node_wheel_fr = get_node("CarWheelFR")
 onready var node_wheel_rl = get_node("CarWheelRL")
 onready var node_wheel_rr = get_node("CarWheelRR")
 
+func car_reset():
+	set_linear_velocity(Vector3(0,0,0))
+	set_global_transform(reset_transform)
+
 func input_get():
 	steer_frac = 0
 	motor_frac = 0
@@ -78,7 +87,7 @@ func input_get():
 
 func input_get_shmem():
 	var dat = shmem_access.data_read()
-	if typeof(dat) != TYPE_NIL and len(dat) > 0:
+	if typeof(dat) == TYPE_REAL_ARRAY:
 		shmem_accessible = true
 		if typeof(dat[1]) == TYPE_REAL:
 			steer_frac = -((dat[1] - 0.5) * 2) * steer_frac_max
@@ -99,12 +108,17 @@ func input_get_shmem():
 		motor_v = ((motor_frac - 0.5) * 2.0) * motor_v_max
 
 func _ready():
-	pause_mode = Node.PAUSE_MODE_PROCESS # To avoid pasuing '_process' when game is paused
-	if mode_training and OS.get_name() == "X11":
-		shmem_access = preload("res://lib_native/libshmemaccess.gdns").new()
 	set_brake(0.003) # The deceleration when no power is given to motors TODO: MEASURE ME
+	reset_transform = get_global_transform()
 	
-var delta_total = 0.0
+	if mode_training and OS.get_name() == "X11":
+		pause_mode = Node.PAUSE_MODE_PROCESS # To avoid pasuing '_process' when game is paused
+		shmem_access = preload("res://lib_native/libshmemaccess.gdns").new()
+	else:
+		var original_size = OS.window_size
+		# Make window big when not training
+		OS.set_window_size(Vector2(original_size[0] * 20, original_size[1] * 20))
+	
 func _process(delta):
 	if mode_training and OS.get_name() == "X11":
 		var state = shmem_access.state_read()
@@ -114,17 +128,31 @@ func _process(delta):
 				delta_total += delta
 				if delta_total >= time_step_length:
 					delta_total = 0.0;
-					shmem_access.state_reset()
 					shmem_update()
+					shmem_access.state_reset()
 			elif state == 2:
-				get_tree().reload_current_scene()
-				shmem_access.state_reset()
-				shmem_update()
+				if resetting == false:
+					car_reset()
+					get_tree().paused = false
+					resetting = true
+				else:
+					# Allowing for simulation to settle also avoids condition: 
+					# 'p_aabb.position.y > 1e15 || p_aabb.position.y < -1e15'
+					delta_total += delta
+					if delta_total >= time_reset_settle:
+						shmem_update() # Initial observation
+						shmem_access.state_reset()
+						get_tree().paused = true
+						resetting = false
+						delta_total = 0.0
 			else:
 				push_error("Unrecognized state in training shmem")
 				get_tree().quit()
 		else:
 			get_tree().paused = true
+	else:
+		if Input.is_action_pressed("reset"):
+			car_reset()
 	
 func shmem_update():
 	if OS.get_name() == "X11":
@@ -135,10 +163,14 @@ func shmem_update():
 			node_wheel_rl.get_global_transform().origin[1] <= 0.323,
 			node_wheel_rr.get_global_transform().origin[1] <= 0.323,
 		]
-		var drifting = !bool(int(node_wheel_fl.get_skidinfo()) || int(node_wheel_fr.get_skidinfo()) || int(node_wheel_rl.get_skidinfo()) || int(node_wheel_rr.get_skidinfo()))
+		var drifting = !bool(int(node_wheel_fl.get_skidinfo()) || 
+			int(node_wheel_fr.get_skidinfo()) || 
+			int(node_wheel_rl.get_skidinfo()) || 
+			int(node_wheel_rr.get_skidinfo()))
 		
 		# Compute length of velocity vector perpendicular to forward direction of the car
 		var speed = -get_transform().basis.xform_inv(get_linear_velocity()).z / 100 # in meters/second
+		print(speed)
 		
 		# Global positon of the car
 		var pos = get_transform().origin
@@ -151,13 +183,17 @@ func shmem_update():
 		shmem_access.data_write(wheels_off_track, drifting, speed, pos, video)
 
 func _physics_process(delta):
-	if mode_training and (OS.get_name() == "X11"):
-		input_get_shmem()
+	if not resetting:
+		if mode_training and (OS.get_name() == "X11"):
+			input_get_shmem()
+		else:
+			input_get()
+		
+		var amp = get_motor_current(motor_v, motor_resistance)
+		var torque = get_motor_torque(amp, motor_kv)
+		
+		set_steering(steer_frac)
+		set_engine_force((torque/0.0325)/1.8) # Force is (torque/moment)
 	else:
-		input_get()
-	
-	var amp = get_motor_current(motor_v, motor_resistance)
-	var torque = get_motor_torque(amp, motor_kv)
-	
-	set_steering(steer_frac)
-	set_engine_force((torque/0.0325)/1.8) # Force is (torque/moment)
+		set_steering(0.0)
+		set_engine_force(0.0)

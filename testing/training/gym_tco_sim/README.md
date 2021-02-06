@@ -1,12 +1,6 @@
 # OpenAI Gym Environment for TCO Godot Simulator
-## Dependencies
-- gym
-- numpy
-- posix_ipc
-- cv2
 
 ## Setup
-1. Export simulator into ./sim/tco_sim.bin
-2. Run ```python3 setup.py install``` to install all the dependencies
-3. Run ```pip3 install -e .``` to install the environment and make it accessible via ID
-   ```gym_tco_sim:tco-sim-v0```
+1. Install the following gym dependencies: ```libglu1-mesa-dev libgl1-mesa-dev libosmesa6-dev xvfb ffmpeg curl patchelf libglfw3 libglfw3-dev cmake zlib1g zlib1g-dev swig``
+1. Run ```install_env.sh``` which will export the simulator, download all depencies and install the
+environment under ID  ```gym_tco_sim:tco-sim-v0```.

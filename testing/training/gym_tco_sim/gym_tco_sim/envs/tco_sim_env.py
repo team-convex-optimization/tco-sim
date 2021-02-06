@@ -23,13 +23,15 @@ control_sem = pipc.Semaphore("tco_shmem_sem_control")
 
 def env_step():
   shmem_training_state_set(1)
+  # Waiting for simulator to finish the step
   while shmem_training_state_get() != 0:
     time.sleep(0.01)
 
 def env_reset():
   shmem_training_state_set(2)
+  # Waiting for simulator to finish the reset
   while shmem_training_state_get() != 0:
-    time.sleep(0.01)
+    time.sleep(0.01) 
 
 def shmem_control_throttle_set(val):
   if val > 1:
@@ -58,7 +60,7 @@ def shmem_control_steer_set(val):
   os.write(control_shm.fd, field_uint8.pack(1))
   control_sem.release()
   # Set channel val and active flag
-  os.lseek(control_shm.fd, 2, os.SEEK_SET)
+  os.lseek(control_shm.fd, 2 + field_ch.size, os.SEEK_SET)
   control_sem.acquire()
   os.write(control_shm.fd, field_ch.pack(1, val))
   control_sem.release()
@@ -108,7 +110,6 @@ def main():
   training_data = shmem_training_read()
   shmem_control_steer_set(0.8)
   shmem_control_throttle_set(0.55)
-
   env_reset()
   i = 0
   while i < 1000:
@@ -160,14 +161,15 @@ class TcoSimEnv(gym.Env):
     env_step()
 
     observation = shmem_training_read()
-    wheels_off_track = np.array(observation[0][2:6], dtype=np.bool)
-    drifting = observation[0][7] == 1
-    speed = observation[0][8]
-    pos = observation[0][9:11]
+    wheels_off_track = np.array(observation[0][2:6], dtype=np.uint8)
+    drifting = observation[0][6] == 1
+    speed = observation[0][7]
+    pos = observation[0][8:11]
     video = np.array(observation[0][11:], dtype=np.uint8)
 
-    done = drifting or (np.sum(wheels_off_track) > 2)
-    return video, 1.0, done, {}
+    reward = 0.1 + speed
+    done = drifting or (np.sum(wheels_off_track) > 2) or (reward < -50) or (speed < -0.01)
+    return video, reward, done, {}
 
   def reset(self):
     """Resets the environment to an initial state and returns an initial

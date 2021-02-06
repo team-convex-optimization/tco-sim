@@ -62,6 +62,7 @@ void *shmem_constructor(godot_object *p_instance, void *p_method_data)
         return NULL;
     }
 
+    log_debug("Libshmemaccess constructed");
     return user_data;
 }
 
@@ -86,7 +87,7 @@ void shmem_destructor(godot_object *p_instance, void *p_method_data, void *p_use
         log_error("Failed to close semaphor for training shmem");
     }
 
-    log_debug("Libshmemaccess destroyed");
+    log_debug("Libshmemaccess deconstructed");
     if (user_data->log_initialized)
     {
         if (log_deinit() != 0)
@@ -163,6 +164,7 @@ godot_variant shmem_data_read(godot_object *p_instance, void *p_method_data, voi
 
     godot_variant data_ch_var;
     api->godot_variant_new_pool_real_array(&data_ch_var, &data_ch_pool);
+    api->godot_pool_real_array_destroy(&data_ch_pool);
     api->godot_variant_destroy(&ret_failure);
     return data_ch_var;
 }
