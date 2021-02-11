@@ -87,7 +87,7 @@ func input_get():
 
 func input_get_shmem():
 	var dat = shmem_access.data_read()
-	if typeof(dat) == TYPE_REAL_ARRAY:
+	if typeof(dat) == TYPE_REAL_ARRAY and len(dat) > 0:
 		shmem_accessible = true
 		if typeof(dat[1]) == TYPE_REAL:
 			steer_frac = -((dat[1] - 0.5) * 2) * steer_frac_max
