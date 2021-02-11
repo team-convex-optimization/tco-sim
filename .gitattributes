@@ -1,1 +1,12 @@
+# Correctly categorize C files
+*.h linguist-language=C
+*.c linguist-language=C
+
+# Avoid mis-categorizaton of GDScript files
 *.gd linguist-language=GDScript
+
+# Make sure all these files have LF line endings
+*.c text
+*.h text
+*.md text
+*.sh text

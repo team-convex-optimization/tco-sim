@@ -16,5 +16,3 @@ godot_project/lib_native/*.so
 # Logger output
 log.txt
 
-# Python
-*.pyc
