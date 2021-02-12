@@ -4,7 +4,7 @@ extends VehicleBody
 # Libshmemaccess i.e. the interface to shared memory objects only works on 
 # linux hence the checks for 'OS.get_name() == "X11"'
 
-const mode_training = true
+const mode_training = false
 const time_step_length = 1.0/120.0 # seconds
 const time_reset_settle = 1.0 # seconds
 # Used to step and reset
@@ -34,12 +34,13 @@ const servo_speed = 0.08 #sec/60deg @ 6V (so it takes 0.04 seconds to full steer
 const servo_torque = 9.3 #kgcm @ 6V
 const servo_max_voltage = 6
 const servo_weight = 0.045 #kg
+const servo_frac_per_sec = 8.72664626 # ((60 degrees) / (0.08 seconds)) * ((60 degrees) / (90 degrees)) 
 
 # State vars
 var motor_v = 0
 var motor_frac = 0
 var steer_frac = 0
-const steer_frac_max = 0.45
+const steer_frac_max = 0.31 # around 28 degrees
 var shmem_access = null
 var shmem_accessible = false
 
@@ -62,9 +63,9 @@ func input_get():
 		steer_frac += 1
 		
 	if Input.is_action_pressed("accelerate"):
-		motor_frac = motor_v_max
+		motor_frac = 1
 	if Input.is_action_pressed("decelerate"):
-		motor_frac -= motor_v_max
+		motor_frac -= 1
 		
 	if Input.is_action_pressed("joy_steer_left"):
 		steer_frac += -Input.get_action_strength("joy_steer_left")
@@ -74,16 +75,16 @@ func input_get():
 		steer_frac = 0
 		
 	if Input.is_action_pressed("joy_accelerate"):
-		motor_frac = Input.get_action_strength("joy_accelerate") * motor_v_max
+		motor_frac = Input.get_action_strength("joy_accelerate")
 	if Input.is_action_pressed("joy_deccelerate"):
-		motor_frac -= Input.get_action_strength("joy_deccelerate") * motor_v_max
+		motor_frac -= Input.get_action_strength("joy_deccelerate")
 		
 	steer_frac = -clamp(steer_frac, -steer_frac_max, steer_frac_max)
 	motor_frac = clamp(motor_frac, -1, 1)
-	if motor_frac == 0:
+	if abs(motor_frac) < 0.01:
 		motor_v = 0
 	else:
-		motor_v = (1/motor_frac) * motor_v_max
+		motor_v = motor_frac * motor_v_max
 
 func input_get_shmem():
 	var dat = shmem_access.data_read()
@@ -108,7 +109,7 @@ func input_get_shmem():
 		motor_v = ((motor_frac - 0.5) * 2.0) * motor_v_max
 
 func _ready():
-	set_brake(0.003) # The deceleration when no power is given to motors TODO: MEASURE ME
+	set_brake(0.00246) # The deceleration when no power is given to motors TODO: MEASURE ME
 	reset_transform = get_global_transform()
 	
 	if mode_training and OS.get_name() == "X11":
@@ -117,7 +118,7 @@ func _ready():
 	else:
 		var original_size = OS.window_size
 		# Make window big when not training
-		OS.set_window_size(Vector2(original_size[0] * 20, original_size[1] * 20))
+		OS.set_window_size(Vector2(original_size[0] * 30, original_size[1] * 30))
 	
 func _process(delta):
 	if mode_training and OS.get_name() == "X11":
@@ -170,7 +171,6 @@ func shmem_update():
 		
 		# Compute length of velocity vector perpendicular to forward direction of the car
 		var speed = -get_transform().basis.xform_inv(get_linear_velocity()).z / 100 # in meters/second
-		print(speed)
 		
 		# Global positon of the car
 		var pos = get_transform().origin
@@ -184,6 +184,7 @@ func shmem_update():
 
 func _physics_process(delta):
 	if not resetting:
+		var steer_frac_old = steer_frac
 		if mode_training and (OS.get_name() == "X11"):
 			input_get_shmem()
 		else:
@@ -192,6 +193,13 @@ func _physics_process(delta):
 		var amp = get_motor_current(motor_v, motor_resistance)
 		var torque = get_motor_torque(amp, motor_kv)
 		
+		# Enforce servo speed limit
+		var servo_frac_delta = servo_frac_per_sec * delta
+		if steer_frac > steer_frac_old:
+			steer_frac = clamp(steer_frac_old + servo_frac_delta, -steer_frac_max, steer_frac_max)
+		else:
+			steer_frac = clamp(steer_frac_old - servo_frac_delta, -steer_frac_max, steer_frac_max)
+			
 		set_steering(steer_frac)
 		set_engine_force((torque/0.0325)/1.8) # Force is (torque/moment)
 	else:

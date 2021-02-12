@@ -1,7 +1,8 @@
 extends Spatial
 
 # s = straight, l = left, r = right, e = straight extension, i = intersection
-const track_desc = "sllllsrrrrssrrsseerrssrrrr"
+#const track_desc = "sllllsrrrrssrrsseerrssrrrr"
+const track_desc = "ssllsssllseiesrrsrrllrrsrrrrllseierrsssrrllssssseiesllssrrssrrsecssrrsssrrllrrsiesssllsllrrscsrrllss"
 
 # Offset in format [x,z,deg]
 const offsets = {
@@ -10,7 +11,7 @@ const offsets = {
 	'r':[1.3034237,-3.1465890,-45], 
 	'i':[0,-5.5,0], 
 	'e':[0,-1.7,0], 
-	'c':[0,14.4,0]
+	'c':[0,-14.4,0]
 }
 const pieces = {
 	's':preload("res://tracks/pieces/straight.tscn"), 

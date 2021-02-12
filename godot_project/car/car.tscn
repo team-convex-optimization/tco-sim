@@ -15,7 +15,7 @@ extents = Vector3( 0.47, 0.015, 1.483 )
 [node name="Car" type="Spatial"]
 
 [node name="VehicleBody" type="VehicleBody" parent="."]
-mass = 0.233673
+mass = 0.335714
 continuous_cd = true
 can_sleep = false
 script = ExtResource( 1 )
@@ -56,9 +56,9 @@ use_as_steering = true
 wheel_roll_influence = 0.001
 wheel_radius = 0.325
 wheel_rest_length = 0.1
-wheel_friction_slip = 9.0
+wheel_friction_slip = 11.0
 suspension_travel = 0.1
-suspension_stiffness = 150.0
+suspension_stiffness = 300.0
 suspension_max_force = 2000.0
 
 [node name="MeshInstance" type="MeshInstance" parent="VehicleBody/CarWheelFR"]
@@ -73,9 +73,9 @@ use_as_steering = true
 wheel_roll_influence = 0.001
 wheel_radius = 0.325
 wheel_rest_length = 0.1
-wheel_friction_slip = 9.0
+wheel_friction_slip = 11.0
 suspension_travel = 0.1
-suspension_stiffness = 150.0
+suspension_stiffness = 300.0
 suspension_max_force = 2000.0
 
 [node name="MeshInstance" type="MeshInstance" parent="VehicleBody/CarWheelFL"]
@@ -90,9 +90,9 @@ use_as_traction = true
 wheel_roll_influence = 0.001
 wheel_radius = 0.325
 wheel_rest_length = 0.1
-wheel_friction_slip = 9.0
+wheel_friction_slip = 11.0
 suspension_travel = 0.1
-suspension_stiffness = 150.0
+suspension_stiffness = 300.0
 suspension_max_force = 2000.0
 
 [node name="MeshInstance" type="MeshInstance" parent="VehicleBody/CarWheelRL"]
@@ -107,9 +107,9 @@ use_as_traction = true
 wheel_roll_influence = 0.001
 wheel_radius = 0.325
 wheel_rest_length = 0.1
-wheel_friction_slip = 9.0
+wheel_friction_slip = 11.0
 suspension_travel = 0.1
-suspension_stiffness = 150.0
+suspension_stiffness = 300.0
 suspension_max_force = 2000.0
 
 [node name="MeshInstance" type="MeshInstance" parent="VehicleBody/CarWheelRR"]

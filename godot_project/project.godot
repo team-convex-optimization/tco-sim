@@ -21,7 +21,7 @@ config/icon="res://sim_icon.png"
 
 [debug]
 
-settings/fps/force_fps=240
+settings/fps/force_fps=120
 settings/stdout/print_fps=true
 
 [display]
@@ -91,8 +91,9 @@ reset={
 [physics]
 
 common/physics_fps=240
-3d/physics_engine="Bullet"
 3d/active_soft_world=false
+common/enable_object_picking=false
+3d/smooth_trimesh_collision=true
 
 [rendering]
 

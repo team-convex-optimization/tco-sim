@@ -32,6 +32,26 @@ physics_material_override = SubResource( 1 )
 [node name="CollisionShape" type="CollisionShape" parent="Floor"]
 shape = SubResource( 2 )
 
+[node name="CollisionShape2" type="CollisionShape" parent="Floor"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1 )
+shape = SubResource( 2 )
+
+[node name="CollisionShape3" type="CollisionShape" parent="Floor"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, 1 )
+shape = SubResource( 2 )
+
+[node name="CollisionShape4" type="CollisionShape" parent="Floor"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, 0 )
+shape = SubResource( 2 )
+
+[node name="CollisionShape5" type="CollisionShape" parent="Floor"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, -1 )
+shape = SubResource( 2 )
+
+[node name="CollisionShape6" type="CollisionShape" parent="Floor"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1 )
+shape = SubResource( 2 )
+
 [node name="FloorSpots" type="MeshInstance" parent="Floor"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -0.000251878, 0, 0.00109505 )
 mesh = SubResource( 3 )
