@@ -5,7 +5,7 @@ extends VehicleBody
 # linux hence the checks for 'OS.get_name() == "X11"'
 
 const mode_training = false
-const time_step_length = 1.0/120.0 # seconds
+const time_step_length = 1.0/30.0 # seconds
 const time_reset_settle = 1.0 # seconds
 # Used to step and reset
 var delta_total = 0.0
