@@ -20,6 +20,7 @@ const motor_weight = 0.178 #kg
 const motor_frequency = 8 #hz
 const motor_inductance =  0.0046 #henry
 const motor_resistance = 2 * 3.14 * motor_frequency * motor_inductance
+const motor_breaking_idle = 0.00246 # The deceleration when no power is given to motors TODO: MEASURE ME
 
 func get_motor_current(voltage, resistance):
 	return voltage / resistance
@@ -40,7 +41,7 @@ const servo_frac_per_sec = 8.72664626 # ((60 degrees) / (0.08 seconds)) * ((60 d
 var motor_v = 0
 var motor_frac = 0
 var steer_frac = 0
-const steer_frac_max = 0.31 # around 28 degrees
+const steer_frac_max = 0.32 # around 30 degrees
 var shmem_access = null
 var shmem_accessible = false
 
@@ -109,7 +110,7 @@ func input_get_shmem():
 		motor_v = ((motor_frac - 0.5) * 2.0) * motor_v_max
 
 func _ready():
-	set_brake(0.00246) # The deceleration when no power is given to motors TODO: MEASURE ME
+	set_brake(motor_breaking_idle)
 	reset_transform = get_global_transform()
 	
 	if mode_training and OS.get_name() == "X11":

@@ -91,6 +91,7 @@ reset={
 [physics]
 
 common/physics_fps=240
+3d/physics_engine="Bullet"
 3d/active_soft_world=false
 common/enable_object_picking=false
 3d/smooth_trimesh_collision=true
@@ -99,8 +100,9 @@ common/enable_object_picking=false
 
 quality/filters/anisotropic_filter_level=16
 quality/shadows/filter_mode=2
+quality/depth_prepass/enable=false
 quality/subsurface_scattering/quality=0
 quality/subsurface_scattering/weight_samples=false
-quality/voxel_cone_tracing/high_quality=true
 quality/filters/msaa=4
+quality/depth/hdr=false
 environment/default_environment="res://environment/environment.tres"

@@ -1,8 +1,12 @@
 extends Spatial
 
 # s = straight, l = left, r = right, e = straight extension, i = intersection
+# Difficult turns track:
 #const track_desc = "sllllsrrrrssrrsseerrssrrrr"
-const track_desc = "ssllsssllseiesrrsrrllrrsrrrrllseierrsssrrllssssseiesllssrrssrrsecssrrsssrrllrrsiesssllsllrrscsrrllss"
+# 2019 fianls track:
+#const track_desc = "ssllsssllseiesrrsrrllrrsrrrrllseierrsssrrllssssseiesllssrrssrrsecssrrsssrrllrrsiesssllsllrrscsrrllss"
+# 2019 qualifiers track:
+const track_desc = "scsrreessssrrssrrrrllllsiesllllslleisllrrrr"
 
 # Offset in format [x,z,deg]
 const offsets = {

@@ -1,13 +1,16 @@
-[gd_scene load_steps=11 format=2]
+[gd_scene load_steps=12 format=2]
 
 [ext_resource path="res://car/car.tscn" type="PackedScene" id=1]
+[ext_resource path="res://root/lights.tscn" type="PackedScene" id=2]
 [ext_resource path="res://root/mat_floor/mat_floor.tres" type="Material" id=3]
 [ext_resource path="res://root/mat_floor_smooth/mat_floor_smooth.tres" type="Material" id=5]
 [ext_resource path="res://root/noise.gd" type="Script" id=6]
 [ext_resource path="res://tracks/track_gen.tscn" type="PackedScene" id=8]
 
 [sub_resource type="PhysicsMaterial" id=1]
+friction = 9.0
 rough = true
+absorbent = true
 
 [sub_resource type="BoxShape" id=2]
 margin = 0.001
@@ -52,39 +55,36 @@ shape = SubResource( 2 )
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1 )
 shape = SubResource( 2 )
 
+[node name="CollisionShape7" type="CollisionShape" parent="Floor"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, -1 )
+shape = SubResource( 2 )
+
+[node name="CollisionShape8" type="CollisionShape" parent="Floor"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1 )
+shape = SubResource( 2 )
+
+[node name="CollisionShape9" type="CollisionShape" parent="Floor"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0 )
+shape = SubResource( 2 )
+
 [node name="FloorSpots" type="MeshInstance" parent="Floor"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -0.000251878, 0, 0.00109505 )
+visible = false
 mesh = SubResource( 3 )
 skin = SubResource( 4 )
 material/0 = ExtResource( 3 )
 
 [node name="FloorSmooth" type="MeshInstance" parent="Floor"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -0.000251878, 0, 0.00109505 )
-visible = false
 mesh = SubResource( 5 )
 skin = SubResource( 4 )
 material/0 = null
 
+[node name="Lights" parent="." instance=ExtResource( 2 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 27.6915, 30.3563, 11.1685 )
+
 [node name="Car" parent="." instance=ExtResource( 1 )]
 transform = Transform( -1, 0, -3.25841e-07, 0, 1, 0, 3.25841e-07, 0, -1, 0, 0.22, 0 )
-
-[node name="DirectionalLight" type="DirectionalLight" parent="."]
-transform = Transform( -1.62921e-07, 0, -1, 0, 1, 0, 1, 0, -1.62921e-07, -28.7853, 4.50887, 0 )
-light_energy = 0.05
-shadow_enabled = true
-
-[node name="SpotLight" type="SpotLight" parent="."]
-transform = Transform( 1, 0, 0, 0, -1.62921e-07, 1, 0, -1, -1.62921e-07, -4.48968, 16.3595, 9.25188 )
-light_energy = 5.0
-light_indirect_energy = 2.0
-shadow_enabled = true
-spot_range = 36.2
-spot_angle = 75.0
-
-[node name="SpotLight2" type="SpotLight" parent="."]
-transform = Transform( 1, 0, 0, 0, -1.62921e-07, 1, 0, -1, -1.62921e-07, -4.48968, 9.23735, 16.7731 )
-shadow_enabled = true
-spot_range = 20.0
 
 [node name="TrackGen" parent="." instance=ExtResource( 8 )]
 
