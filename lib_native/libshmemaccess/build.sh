@@ -27,6 +27,8 @@ clang \
     -rdynamic \
     -shared \
     -l rt \
+    -l i2c \
+    -l gpiod \
     build/*.o \
     -o ../../godot_project/lib_native/libshmemaccess.so
     

@@ -26,8 +26,8 @@ settings/stdout/print_fps=true
 
 [display]
 
-window/size/width=32
-window/size/height=18
+window/size/width=640
+window/size/height=480
 window/size/resizable=false
 window/vsync/use_vsync=false
 window/stretch/aspect="keep"
@@ -105,4 +105,3 @@ quality/subsurface_scattering/quality=0
 quality/subsurface_scattering/weight_samples=false
 quality/filters/msaa=4
 quality/depth/hdr=false
-environment/default_environment="res://environment/environment.tres"

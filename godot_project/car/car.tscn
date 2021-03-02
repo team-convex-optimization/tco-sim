@@ -72,6 +72,7 @@ material/0 = ExtResource( 7 )
 
 [node name="CarWheelFL" type="VehicleWheel" parent="VehicleBody"]
 transform = Transform( 0.998629, 0, 0.052336, 0, 1, 0, -0.052336, 0, 0.998629, 0.95, 0.21, 1.093 )
+engine_force = 1.47136e-43
 use_as_traction = true
 use_as_steering = true
 wheel_radius = 0.325
