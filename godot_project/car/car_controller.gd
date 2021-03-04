@@ -5,6 +5,8 @@ extends VehicleBody
 # linux hence the checks for 'OS.get_name() == "X11"'
 
 const mode_training = true
+const stepping = false
+const remote_control = false
 const time_step_length = 1.0/30.0 # seconds
 const time_reset_settle = 1.0 # seconds
 # Used to step and reset
@@ -114,15 +116,16 @@ func _ready():
 	reset_transform = get_global_transform()
 	
 	if mode_training and OS.get_name() == "X11":
-		pause_mode = Node.PAUSE_MODE_PROCESS # To avoid pasuing '_process' when game is paused
 		shmem_access = preload("res://lib_native/libshmemaccess.gdns").new()
+		if stepping:
+			pause_mode = Node.PAUSE_MODE_PROCESS # To avoid pasuing '_process' when game is paused
 	else:
 		var original_size = OS.window_size
 		# Make window big when not training
-		OS.set_window_size(Vector2(original_size[0] * 30, original_size[1] * 30))
+		OS.set_window_size(Vector2(original_size[0] * 2, original_size[1] * 2))
 	
 func _process(delta):
-	if mode_training and OS.get_name() == "X11":
+	if mode_training and stepping and OS.get_name() == "X11":
 		var state = shmem_access.state_read()
 		if state > 0:
 			if state == 1:
@@ -153,6 +156,8 @@ func _process(delta):
 		else:
 			get_tree().paused = true
 	else:
+		if mode_training and not stepping:
+			shmem_update()
 		if Input.is_action_pressed("reset"):
 			car_reset()
 	
@@ -186,7 +191,7 @@ func shmem_update():
 func _physics_process(delta):
 	if not resetting:
 		var steer_frac_old = steer_frac
-		if mode_training and (OS.get_name() == "X11"):
+		if mode_training and remote_control and (OS.get_name() == "X11"):
 			input_get_shmem()
 		else:
 			input_get()
