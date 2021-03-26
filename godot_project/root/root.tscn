@@ -75,7 +75,7 @@ skin = SubResource( 4 )
 material/0 = ExtResource( 3 )
 
 [node name="FloorSmooth" type="MeshInstance" parent="Floor"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -0.000251878, 0, 0.00109505 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.032, 0, 0.297 )
 mesh = SubResource( 5 )
 skin = SubResource( 4 )
 material/0 = null

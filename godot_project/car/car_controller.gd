@@ -4,9 +4,14 @@ extends VehicleBody
 # Libshmemaccess i.e. the interface to shared memory objects only works on 
 # linux hence the checks for 'OS.get_name() == "X11"'
 
+# true means that the sim connects to training shmem and writes its state there.
 const mode_training = true
-const stepping = false
-const remote_control = false
+# true means that the sim will step "time_step_length" then wait for the shmem 
+# state variable to change to 1 which causes the sim to step again.
+const stepping = false 
+# true means that the sim will use controls from the control shmem to drive. 
+# All manual controls will be disabled.
+const remote_control = true
 const time_step_length = 1.0/30.0 # seconds
 const time_reset_settle = 1.0 # seconds
 # Used to step and reset
@@ -117,15 +122,14 @@ func _ready():
 	
 	if mode_training and OS.get_name() == "X11":
 		shmem_access = preload("res://lib_native/libshmemaccess.gdns").new()
-		if stepping:
-			pause_mode = Node.PAUSE_MODE_PROCESS # To avoid pasuing '_process' when game is paused
+		pause_mode = Node.PAUSE_MODE_PROCESS # To avoid pasuing '_process' when game is paused
 	else:
 		var original_size = OS.window_size
 		# Make window big when not training
 		OS.set_window_size(Vector2(original_size[0] * 2, original_size[1] * 2))
 	
 func _process(delta):
-	if mode_training and stepping and OS.get_name() == "X11":
+	if mode_training and remote_control and OS.get_name() == "X11":
 		var state = shmem_access.state_read()
 		if state > 0:
 			if state == 1:
@@ -154,7 +158,11 @@ func _process(delta):
 				push_error("Unrecognized state in training shmem")
 				get_tree().quit()
 		else:
-			get_tree().paused = true
+			# Only pause when stepping
+			if stepping:
+				get_tree().paused = true
+			else:
+				get_tree().paused = false
 	else:
 		if mode_training and not stepping:
 			shmem_update()
