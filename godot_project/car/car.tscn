@@ -1,9 +1,10 @@
-[gd_scene load_steps=8 format=2]
+[gd_scene load_steps=9 format=2]
 
 [ext_resource path="res://car/car_controller.gd" type="Script" id=1]
 [ext_resource path="res://car/models/wheel.obj" type="ArrayMesh" id=2]
 [ext_resource path="res://car/models/car.obj" type="ArrayMesh" id=3]
 [ext_resource path="res://car/plastic_black.tres" type="Material" id=4]
+[ext_resource path="res://car/car_physmat.tres" type="PhysicsMaterial" id=5]
 [ext_resource path="res://car/mat_rubber/mat_rubber.tres" type="Material" id=7]
 
 [sub_resource type="BoxShape" id=1]
@@ -17,7 +18,8 @@ material = ExtResource( 4 )
 
 [node name="VehicleBody" type="VehicleBody" parent="."]
 input_ray_pickable = false
-mass = 0.178571
+mass = 0.153061
+physics_material_override = ExtResource( 5 )
 continuous_cd = true
 can_sleep = false
 linear_damp = 0.0
@@ -795,6 +797,11 @@ transform = Transform( 0.887, 0, 0, 0, 0.251, 0, 0, 0, 0.257, 0, 0.271, -0.93256
 mesh = SubResource( 2 )
 material/0 = null
 
+[node name="MeshInstance5" type="MeshInstance" parent="VehicleBody"]
+transform = Transform( 0.64, 0, 0, 0, 0.125, 0, 0, 0, 0.217, 0, 0.178825, 1.55391 )
+mesh = SubResource( 2 )
+material/0 = null
+
 [node name="Accessories" type="Spatial" parent="VehicleBody"]
 
 [node name="Camera" type="Camera" parent="VehicleBody/Accessories"]
@@ -803,40 +810,42 @@ fov = 85.0
 near = 0.1
 
 [node name="CarWheelFR" type="VehicleWheel" parent="VehicleBody"]
-transform = Transform( 0.998629, 0, -0.052336, 0, 1, 0, 0.052336, 0, 0.998629, -0.95, 0.21, 1.093 )
+transform = Transform( 0.999847, 0, -0.0174524, 0, 1, 0, 0.0174524, 0, 0.999847, -0.95, 0.21, 1.093 )
 engine_force = -10.0
 use_as_traction = true
 use_as_steering = true
-wheel_radius = 0.325
+wheel_roll_influence = 0.2
+wheel_radius = 0.425
 wheel_rest_length = 0.1
-wheel_friction_slip = 30.0
+wheel_friction_slip = 8.0
 suspension_travel = 0.2
 suspension_stiffness = 200.0
-suspension_max_force = 2000.0
-damping_compression = 0.93
+suspension_max_force = 1000.0
+damping_compression = 0.98
 damping_relaxation = 0.98
 
 [node name="MeshInstance" type="MeshInstance" parent="VehicleBody/CarWheelFR"]
-transform = Transform( -1.62921e-09, -0.01, 0, 0.01, -1.62921e-09, 0, 0, 0, 0.01, 0, 0, 0 )
+transform = Transform( -2.11797e-09, -0.012, 0, 0.013, -1.95505e-09, 0, 0, 0, 0.013, 0, 0, 0 )
 mesh = ExtResource( 2 )
 material/0 = ExtResource( 7 )
 
 [node name="CarWheelFL" type="VehicleWheel" parent="VehicleBody"]
-transform = Transform( 0.998629, 0, 0.052336, 0, 1, 0, -0.052336, 0, 0.998629, 0.95, 0.21, 1.093 )
+transform = Transform( 0.999847, 0, 0.0174524, 0, 1, 0, -0.0174524, 0, 0.999847, 0.95, 0.21, 1.093 )
 engine_force = 1.47136e-43
 use_as_traction = true
 use_as_steering = true
-wheel_radius = 0.325
+wheel_roll_influence = 0.2
+wheel_radius = 0.425
 wheel_rest_length = 0.1
-wheel_friction_slip = 30.0
+wheel_friction_slip = 8.0
 suspension_travel = 0.2
 suspension_stiffness = 200.0
-suspension_max_force = 2000.0
-damping_compression = 0.93
+suspension_max_force = 1000.0
+damping_compression = 0.98
 damping_relaxation = 0.98
 
 [node name="MeshInstance" type="MeshInstance" parent="VehicleBody/CarWheelFL"]
-transform = Transform( -1.62921e-09, 0.01, 0, -0.01, -1.62921e-09, 0, 0, 0, 0.01, 0, 0, 0 )
+transform = Transform( -2.11797e-09, 0.012, 0, -0.013, -1.95505e-09, 0, 0, 0, 0.013, 0, 0, 0 )
 mesh = ExtResource( 2 )
 material/0 = ExtResource( 7 )
 
@@ -844,17 +853,18 @@ material/0 = ExtResource( 7 )
 transform = Transform( 0.999391, 0, -0.0348995, 0, 1, 0, 0.0348995, 0, 0.999391, 0.95, 0.21, -0.922 )
 engine_force = 1.0
 use_as_traction = true
-wheel_radius = 0.325
+wheel_roll_influence = 0.2
+wheel_radius = 0.425
 wheel_rest_length = 0.1
-wheel_friction_slip = 30.0
+wheel_friction_slip = 8.0
 suspension_travel = 0.2
 suspension_stiffness = 200.0
-suspension_max_force = 2000.0
-damping_compression = 0.93
+suspension_max_force = 1000.0
+damping_compression = 0.98
 damping_relaxation = 0.98
 
 [node name="MeshInstance" type="MeshInstance" parent="VehicleBody/CarWheelRL"]
-transform = Transform( -1.62921e-09, 0.01, 0, -0.01, -1.62921e-09, 0, 0, 0, 0.01, 0, 0, 0 )
+transform = Transform( -2.11797e-09, 0.017, 0, -0.013, -2.76965e-09, 0, 0, 0, 0.013, 0, 0, 0 )
 mesh = ExtResource( 2 )
 material/0 = ExtResource( 7 )
 
@@ -862,16 +872,17 @@ material/0 = ExtResource( 7 )
 transform = Transform( 0.999391, 0, 0.0348995, 0, 1, 0, -0.0348995, 0, 0.999391, -0.95, 0.21, -0.922 )
 engine_force = 1.0
 use_as_traction = true
-wheel_radius = 0.325
+wheel_roll_influence = 0.2
+wheel_radius = 0.425
 wheel_rest_length = 0.1
-wheel_friction_slip = 30.0
+wheel_friction_slip = 8.0
 suspension_travel = 0.2
 suspension_stiffness = 200.0
-suspension_max_force = 2000.0
-damping_compression = 0.93
+suspension_max_force = 1000.0
+damping_compression = 0.98
 damping_relaxation = 0.98
 
 [node name="MeshInstance" type="MeshInstance" parent="VehicleBody/CarWheelRR"]
-transform = Transform( -1.62921e-09, -0.01, 0, 0.01, -1.62921e-09, 0, 0, 0, 0.01, 0, 0, 0 )
+transform = Transform( -2.11797e-09, -0.017, 0, 0.013, -2.76965e-09, 0, 0, 0, 0.013, 0, 0, 0 )
 mesh = ExtResource( 2 )
 material/0 = ExtResource( 7 )

@@ -8,9 +8,7 @@
 [ext_resource path="res://tracks/track_gen.tscn" type="PackedScene" id=8]
 
 [sub_resource type="PhysicsMaterial" id=1]
-friction = 9.0
-rough = true
-absorbent = true
+friction = 10.0
 
 [sub_resource type="BoxShape" id=2]
 margin = 0.001
@@ -84,16 +82,16 @@ material/0 = null
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 27.6915, 30.3563, 11.1685 )
 
 [node name="Car" parent="." instance=ExtResource( 1 )]
-transform = Transform( -1, 0, -3.25841e-07, 0, 1, 0, 3.25841e-07, 0, -1, 0, 0.22, 0 )
+transform = Transform( -1, 0, -3.25841e-07, 0, 1, 0, 3.25841e-07, 0, -1, 0, 0.32, 0 )
 
 [node name="TrackGen" parent="." instance=ExtResource( 8 )]
 
 [node name="NoiseLayer1" type="Sprite" parent="."]
 visible = false
-modulate = Color( 0.196078, 0.196078, 0.196078, 0.196078 )
+modulate = Color( 1, 1, 1, 0.196078 )
+self_modulate = Color( 0, 0, 0, 0.45098 )
 light_mask = -2147483647
-position = Vector2( 301.124, 167.489 )
-scale = Vector2( -1.21624, 0.685508 )
+scale = Vector2( 2, 2 )
 region_rect = Rect2( 0, 0, 550, 550 )
 script = ExtResource( 6 )
 
@@ -101,7 +99,6 @@ script = ExtResource( 6 )
 visible = false
 modulate = Color( 0.196078, 0.196078, 0.196078, 0.196078 )
 light_mask = -2147483647
-position = Vector2( 301.124, 167.489 )
-scale = Vector2( -1.21624, 0.685508 )
+scale = Vector2( 2, 2 )
 region_rect = Rect2( 0, 0, 550, 550 )
 script = ExtResource( 6 )

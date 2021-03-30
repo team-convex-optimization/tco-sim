@@ -91,7 +91,7 @@ reset={
 [physics]
 
 common/physics_fps=240
-3d/physics_engine="Bullet"
+3d/physics_engine="GodotPhysics"
 3d/active_soft_world=false
 common/enable_object_picking=false
 3d/smooth_trimesh_collision=true

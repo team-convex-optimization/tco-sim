@@ -6,12 +6,17 @@
 [ext_resource path="res://root/mat_floor_smooth/floor_smooth_normal.png" type="Texture" id=4]
 
 [resource]
-albedo_color = Color( 1, 0.521569, 0.254902, 1 )
+albedo_color = Color( 1, 0.603922, 0.384314, 1 )
 albedo_texture = ExtResource( 1 )
 metallic_specular = 0.1
-roughness = 0.1
+roughness = 0.05
 roughness_texture = ExtResource( 3 )
 roughness_texture_channel = 4
+emission_enabled = true
+emission = Color( 1, 0.603922, 0.384314, 1 )
+emission_energy = 0.1
+emission_operator = 0
+emission_on_uv2 = false
 normal_enabled = true
 normal_scale = 1.0
 normal_texture = ExtResource( 4 )
