@@ -11,7 +11,7 @@ const mode_training = true
 const stepping = false 
 # true means that the sim will use controls from the control shmem to drive. 
 # All manual controls will be disabled.
-const remote_control = true
+const remote_control = false
 const time_step_length = 1.0/30.0 # seconds
 const time_reset_settle = 1.0 # seconds
 # Used to step and reset
