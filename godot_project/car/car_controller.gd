@@ -28,6 +28,7 @@ const motor_frequency = 8 #hz
 const motor_inductance =  0.0046 #henry
 const motor_resistance = 2 * 3.14 * motor_frequency * motor_inductance
 const motor_breaking_idle = 0.00246 # The deceleration when no power is given to motors TODO: MEASURE ME
+const motor_throttle_max = 0.4 # only applies to human input
 
 func get_motor_current(voltage, resistance):
 	return voltage / resistance
@@ -89,6 +90,7 @@ func input_get():
 		
 	steer_frac = -clamp(steer_frac, -steer_frac_max, steer_frac_max)
 	motor_frac = clamp(motor_frac, -1, 1)
+	motor_frac *= motor_throttle_max
 	if abs(motor_frac) < 0.01:
 		motor_v = 0
 	else:
