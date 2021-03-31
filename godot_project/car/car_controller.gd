@@ -11,7 +11,7 @@ const mode_training = true
 const stepping = false 
 # true means that the sim will use controls from the control shmem to drive. 
 # All manual controls will be disabled.
-const remote_control = false
+const remote_control = true
 const time_step_length = 1.0/30.0 # seconds
 const time_reset_settle = 1.0 # seconds
 # Used to step and reset
@@ -132,7 +132,7 @@ func _ready():
 		OS.set_window_size(Vector2(original_size[0] * 2, original_size[1] * 2))
 	
 func _process(delta):
-	if mode_training and remote_control and OS.get_name() == "X11":
+	if mode_training and remote_control and stepping and OS.get_name() == "X11":
 		var state = shmem_access.state_read()
 		if state > 0:
 			if state == 1:

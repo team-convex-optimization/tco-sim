@@ -146,7 +146,7 @@ godot_variant shmem_data_read(godot_object *p_instance, void *p_method_data, voi
     {
         /* 
         Loop through channels. If they are active, append the pulse frac to the array, else append
-        0.5. XXX: Setting channels to 0.5 by deault by not be okay.
+        0.5. XXX: Setting channels to 0.5 by default might not be okay.
         */
         for (uint8_t i = 0; i < 16; i++)
         {
