@@ -253,7 +253,7 @@ godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data, vo
     /* These are assumed to never fail */
     memcpy(&data_training_cpy.wheels_off_track, wheels_off_track, 4 * sizeof(uint8_t));
     memcpy(&data_training_cpy.pos, pos, 3 * sizeof(float));
-    memcpy(&data_training_cpy.video, video, TCO_SIM_HEIGHT * TCO_SIM_WIDTH * sizeof(uint8_t));
+    memcpy(&data_training_cpy.video, video, TCO_FRAME_HEIGHT * TCO_FRAME_WIDTH * sizeof(uint8_t));
 
     if (sem_wait(user_data->data_sem_training) == -1)
     {
