@@ -49,7 +49,8 @@ const servo_frac_per_sec = 8.72664626 # ((60 degrees) / (0.08 seconds)) * ((60 d
 var motor_v = 0
 var motor_frac = 0
 var steer_frac = 0
-const steer_frac_max = 0.32 # around 30 degrees
+const steer_angle_max = 28 # degrees
+const steer_frac_max = steer_angle_max / 90.0
 var shmem_access = null
 var shmem_accessible = false
 
