@@ -37,7 +37,7 @@ godot_variant shmem_data_read(godot_object *p_instance, void *p_method_data, voi
                               int p_num_args, godot_variant **p_args);
 
 /**
- * @brief Takes an array containing all elements required to fill the training shared memory and
+ * @brief Takes an array containing all elements required to fill the state shared memory and
  * updates it
  * @param p_instance Pointer to this function
  * @param p_method_data For reusing one function for multiple methods. Unused.
@@ -58,7 +58,7 @@ godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data, vo
                                int p_num_args, godot_variant **p_args);
 
 /**
- * @brief Read the state byte from training shmem and return it.
+ * @brief Read the state byte from state shmem and return it.
  * @param p_instance Pointer to this function
  * @param p_method_data For reusing one function for multiple methods. Unused.
  * @param p_user_data A pointer to a 'user_data' struct that gets passed to every function and
@@ -72,7 +72,7 @@ godot_variant shmem_state_read(godot_object *p_instance, void *p_method_data, vo
 
 /* TODO: Return 0 on success and 1 on failure  */
 /**
- * @brief Write a 0 to the state byte in training shmem indicating that the simulator finished
+ * @brief Write a 0 to the state byte in state shmem indicating that the simulator finished
  * performing any requested changes to the simulation state.
  * @param p_instance Pointer to this function
  * @param p_method_data For reusing one function for multiple methods. Unused.

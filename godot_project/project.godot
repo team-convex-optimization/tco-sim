@@ -21,7 +21,7 @@ config/icon="res://sim_icon.png"
 
 [debug]
 
-settings/fps/force_fps=30
+settings/fps/force_fps=22
 settings/stdout/print_fps=true
 
 [display]

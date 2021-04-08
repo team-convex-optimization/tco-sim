@@ -17,7 +17,6 @@ clang \
     -I ../lib/tco_libd/include \
     -I ../lib/tco_shmem \
     -I ./code \
-    -D TRAINING \
     ../code/*.c
 popd
 

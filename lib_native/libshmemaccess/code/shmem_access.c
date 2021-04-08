@@ -20,8 +20,8 @@ typedef struct user_data_t
     uint8_t log_initialized;
     struct tco_shmem_data_control *data_control;
     sem_t *data_sem_control;
-    struct tco_shmem_data_training *data_training;
-    sem_t *data_sem_training;
+    struct tco_shmem_data_state *data_state;
+    sem_t *data_sem_state;
 } user_data_t;
 
 int log_level = LOG_INFO | LOG_ERROR;
@@ -30,8 +30,8 @@ static int shmem_not_initialized(user_data_t *p_user_data)
 {
     return p_user_data->data_sem_control == NULL ||
            p_user_data->data_control == NULL ||
-           p_user_data->data_training == NULL ||
-           p_user_data->data_sem_training == NULL;
+           p_user_data->data_state == NULL ||
+           p_user_data->data_sem_state == NULL;
 }
 
 void *shmem_constructor(godot_object *p_instance, void *p_method_data)
@@ -56,9 +56,9 @@ void *shmem_constructor(godot_object *p_instance, void *p_method_data)
         return NULL;
     }
 
-    if (shmem_map(TCO_SHMEM_NAME_TRAINING, TCO_SHMEM_SIZE_TRAINING, TCO_SHMEM_NAME_SEM_TRAINING, O_RDWR, (void **)&(user_data->data_training), &(user_data->data_sem_training)) != 0)
+    if (shmem_map(TCO_SHMEM_NAME_STATE, TCO_SHMEM_SIZE_STATE, TCO_SHMEM_NAME_SEM_STATE, O_RDWR, (void **)&(user_data->data_state), &(user_data->data_sem_state)) != 0)
     {
-        log_error("Failed to map training shared memory and associated semaphore");
+        log_error("Failed to map state shared memory and associated semaphore");
         return NULL;
     }
 
@@ -78,13 +78,13 @@ void shmem_destructor(godot_object *p_instance, void *p_method_data, void *p_use
     {
         log_error("Failed to close semaphor for control shmem");
     }
-    if (munmap(user_data->data_training, TCO_SHMEM_SIZE_TRAINING) != 0)
+    if (munmap(user_data->data_state, TCO_SHMEM_SIZE_STATE) != 0)
     {
-        log_error("Failed to unmap training shmem");
+        log_error("Failed to unmap state shmem");
     }
-    if (sem_close(user_data->data_sem_training) != 0)
+    if (sem_close(user_data->data_sem_state) != 0)
     {
-        log_error("Failed to close semaphor for training shmem");
+        log_error("Failed to close semaphor for state shmem");
     }
 
     log_debug("Libshmemaccess deconstructed");
@@ -124,15 +124,7 @@ godot_variant shmem_data_read(godot_object *p_instance, void *p_method_data, voi
         return ret_failure;
     }
     /* START: Critical section */
-    if (user_data->data_control->valid)
-    {
-        memcpy(&shmem_data_cpy, user_data->data_control, TCO_SHMEM_SIZE_CONTROL); /* Assumed to never fail */
-    }
-    else
-    {
-        /* To prevent use of the shmem data which was never read */
-        shmem_data_cpy.valid = 0;
-    }
+    memcpy(&shmem_data_cpy, user_data->data_control, TCO_SHMEM_SIZE_CONTROL); /* Assumed to never fail */
     /* END: Critical section */
     if (sem_post(user_data->data_sem_control) == -1)
     {
@@ -142,23 +134,20 @@ godot_variant shmem_data_read(godot_object *p_instance, void *p_method_data, voi
 
     godot_pool_real_array data_ch_pool;
     api->godot_pool_real_array_new(&data_ch_pool);
-    if (shmem_data_cpy.valid)
+    /* 
+    Loop through channels. If they are active, append the pulse frac to the array, else append 0.5.
+    XXX: Setting channels to 0.5 by default might not be okay.
+    */
+    for (uint8_t i = 0; i < 16; i++)
     {
-        /* 
-        Loop through channels. If they are active, append the pulse frac to the array, else append
-        0.5. XXX: Setting channels to 0.5 by default might not be okay.
-        */
-        for (uint8_t i = 0; i < 16; i++)
+        if (shmem_data_cpy.ch[i].active > 0)
         {
-            if (shmem_data_cpy.ch[i].active > 0)
-            {
-                /* godot_real === float */
-                api->godot_pool_real_array_append(&data_ch_pool, shmem_data_cpy.ch[i].pulse_frac);
-            }
-            else
-            {
-                api->godot_pool_real_array_append(&data_ch_pool, 0.5f);
-            }
+            /* godot_real === float */
+            api->godot_pool_real_array_append(&data_ch_pool, shmem_data_cpy.ch[i].pulse_frac);
+        }
+        else
+        {
+            api->godot_pool_real_array_append(&data_ch_pool, 0.5f);
         }
     }
 
@@ -187,7 +176,7 @@ godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data, vo
 
     if (p_num_args != 5)
     {
-        log_error("Incorrect arg count to write to training shmem. %d given, needed exactly 5", p_num_args);
+        log_error("Incorrect arg count to write to state shmem. %d given, needed exactly 5", p_num_args);
         api->godot_variant_destroy(&ret_success);
         return ret_failure;
     }
@@ -195,24 +184,19 @@ godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data, vo
     /* 'state' is special since it needs to stay the same unless the engine explicitly calls another
     function to reset the 'state' field. */
     uint8_t state;
+    uint32_t frame_id_last;
 
-    if (sem_wait(user_data->data_sem_training) == -1)
+    if (sem_wait(user_data->data_sem_state) == -1)
     {
         log_error("sem_wait: %s", strerror(errno));
         api->godot_variant_destroy(&ret_success);
         return ret_failure;
     }
     /* START: Critical section */
-    if (user_data->data_training->valid == 0)
-    {
-        state = 0; /* By default simulation should run */
-    }
-    else
-    {
-        state = user_data->data_training->state;
-    }
+    state = user_data->data_state->state_sim; /* This is 0 by default when shmem is initialized. */
+    frame_id_last = user_data->data_state->frame_id;
     /* END: Critical section */
-    if (sem_post(user_data->data_sem_training) == -1)
+    if (sem_post(user_data->data_sem_state) == -1)
     {
         log_error("sem_post: %s", strerror(errno));
         api->godot_variant_destroy(&ret_success);
@@ -225,11 +209,10 @@ godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data, vo
 
     godot_vector3 pos_godot = api->godot_variant_as_vector3(p_args[3]);
 
-    godot_pool_byte_array video_godot_arr = api->godot_variant_as_pool_byte_array(p_args[4]);
-    godot_pool_byte_array_read_access *video_godot_arr_access = api->godot_pool_byte_array_read(&video_godot_arr);
+    godot_pool_byte_array frame_godot_arr = api->godot_variant_as_pool_byte_array(p_args[4]);
+    godot_pool_byte_array_read_access *frame_godot_arr_access = api->godot_pool_byte_array_read(&frame_godot_arr);
 
     /* Transform variants to C types */
-    const uint8_t valid = 1u;
     const uint8_t *wheels_off_track = api->godot_pool_byte_array_read_access_ptr(wheels_off_track_godot_arr_access);
     const uint8_t drifting = (uint8_t)api->godot_variant_as_int(p_args[1]);
     const float speed = (float)api->godot_variant_as_real(p_args[2]);
@@ -238,24 +221,24 @@ godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data, vo
         api->godot_vector3_get_axis(&pos_godot, GODOT_VECTOR3_AXIS_Y),
         api->godot_vector3_get_axis(&pos_godot, GODOT_VECTOR3_AXIS_Z),
     };
-    const uint8_t *video = api->godot_pool_byte_array_read_access_ptr(video_godot_arr_access);
+    const uint8_t *frame = api->godot_pool_byte_array_read_access_ptr(frame_godot_arr_access);
 
     /* Construct new contents of the shared memory */
-    struct tco_shmem_data_training data_training_cpy = {
-        .valid = valid,
-        .state = state,
+    struct tco_shmem_data_state data_state_cpy = {
+        .state_sim = state,
         .wheels_off_track = {0},
         .drifting = drifting,
         .speed = speed,
         .pos = {0},
-        .video = {0},
+        .frame = {0},
+        .frame_id = frame_id_last + 1,
     };
     /* These are assumed to never fail */
-    memcpy(&data_training_cpy.wheels_off_track, wheels_off_track, 4 * sizeof(uint8_t));
-    memcpy(&data_training_cpy.pos, pos, 3 * sizeof(float));
-    memcpy(&data_training_cpy.video, video, TCO_FRAME_HEIGHT * TCO_FRAME_WIDTH * sizeof(uint8_t));
+    memcpy(&data_state_cpy.wheels_off_track, wheels_off_track, 4 * sizeof(uint8_t));
+    memcpy(&data_state_cpy.pos, pos, 3 * sizeof(float));
+    memcpy(&data_state_cpy.frame, frame, TCO_FRAME_HEIGHT * TCO_FRAME_WIDTH * sizeof(uint8_t));
 
-    if (sem_wait(user_data->data_sem_training) == -1)
+    if (sem_wait(user_data->data_sem_state) == -1)
     {
         log_error("sem_wait: %s", strerror(errno));
         api->godot_variant_destroy(&ret_success);
@@ -263,9 +246,9 @@ godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data, vo
     }
     /* START: Critical section */
     /* Assumed to never fail */
-    memcpy(user_data->data_training, &data_training_cpy, TCO_SHMEM_SIZE_TRAINING);
+    memcpy(user_data->data_state, &data_state_cpy, TCO_SHMEM_SIZE_STATE);
     /* END: Critical section */
-    if (sem_post(user_data->data_sem_training) == -1)
+    if (sem_post(user_data->data_sem_state) == -1)
     {
         log_error("sem_post: %s", strerror(errno));
         api->godot_variant_destroy(&ret_success);
@@ -275,8 +258,8 @@ godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data, vo
     /* Help Godot free all the unused memory */
     api->godot_pool_byte_array_destroy(&wheels_off_track_godot_arr);
     api->godot_pool_byte_array_read_access_destroy(wheels_off_track_godot_arr_access);
-    api->godot_pool_byte_array_destroy(&video_godot_arr);
-    api->godot_pool_byte_array_read_access_destroy(video_godot_arr_access);
+    api->godot_pool_byte_array_destroy(&frame_godot_arr);
+    api->godot_pool_byte_array_read_access_destroy(frame_godot_arr_access);
 
     api->godot_variant_destroy(&ret_failure);
     return ret_success;
@@ -298,27 +281,20 @@ godot_variant shmem_state_read(godot_object *p_instance, void *p_method_data, vo
 
     if (p_num_args != 0)
     {
-        log_error("Incorrect arg count to write to training shmem. %d given, needed exactly 0", p_num_args);
+        log_error("Incorrect arg count to write to state shmem. %d given, needed exactly 0", p_num_args);
         return ret_failure;
     }
 
     uint8_t state;
-    if (sem_wait(user_data->data_sem_training) == -1)
+    if (sem_wait(user_data->data_sem_state) == -1)
     {
         log_error("sem_wait: %s", strerror(errno));
         return ret_failure;
     }
     /* START: Critical section */
-    if (user_data->data_training->valid)
-    {
-        state = user_data->data_training->state;
-    }
-    else
-    {
-        state = 0; /* By default simulation will be paused */
-    }
+    state = user_data->data_state->state_sim; /* 0 by default which pauses the simulation */
     /* END: Critical section */
-    if (sem_post(user_data->data_sem_training) == -1)
+    if (sem_post(user_data->data_sem_state) == -1)
     {
         log_error("sem_post: %s", strerror(errno));
         return ret_failure;
@@ -348,21 +324,21 @@ godot_variant shmem_state_reset(godot_object *p_instance, void *p_method_data, v
 
     if (p_num_args != 0)
     {
-        log_error("Incorrect arg count to write to training shmem. %d given, needed exactly 0", p_num_args);
+        log_error("Incorrect arg count to write to state shmem. %d given, needed exactly 0", p_num_args);
         api->godot_variant_destroy(&ret_success);
         return ret_failure;
     }
 
-    if (sem_wait(user_data->data_sem_training) == -1)
+    if (sem_wait(user_data->data_sem_state) == -1)
     {
         log_error("sem_wait: %s", strerror(errno));
         api->godot_variant_destroy(&ret_success);
         return ret_failure;
     }
     /* START: Critical section */
-    user_data->data_training->state = 0; /* Doesn't matter if memory is valid or not */
+    user_data->data_state->state_sim = 0;
     /* END: Critical section */
-    if (sem_post(user_data->data_sem_training) == -1)
+    if (sem_post(user_data->data_sem_state) == -1)
     {
         log_error("sem_post: %s", strerror(errno));
         api->godot_variant_destroy(&ret_success);
