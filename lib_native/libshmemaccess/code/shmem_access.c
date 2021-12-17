@@ -70,17 +70,9 @@ void shmem_destructor(godot_object *p_instance, void *p_method_data, void *p_use
 {
     user_data_t *user_data = (user_data_t *)p_user_data;
 
-    if (munmap(user_data->data_control, TCO_SHMEM_SIZE_CONTROL) != 0)
-    {
-        log_error("Failed to unmap control shmem");
-    }
     if (sem_close(user_data->data_sem_control) != 0)
     {
         log_error("Failed to close semaphor for control shmem");
-    }
-    if (munmap(user_data->data_state, TCO_SHMEM_SIZE_STATE) != 0)
-    {
-        log_error("Failed to unmap state shmem");
     }
     if (sem_close(user_data->data_sem_state) != 0)
     {
