@@ -22,6 +22,8 @@ typedef struct user_data_t
     sem_t *data_sem_control;
     struct tco_shmem_data_state *data_state;
     sem_t *data_sem_state;
+    struct tco_shmem_data_sensor *data_sensor;
+    sem_t *data_sem_sensor;
 } user_data_t;
 
 int log_level = LOG_INFO | LOG_ERROR;
@@ -52,13 +54,19 @@ void *shmem_constructor(godot_object *p_instance, void *p_method_data)
 
     if (shmem_map(TCO_SHMEM_NAME_CONTROL, TCO_SHMEM_SIZE_CONTROL, TCO_SHMEM_NAME_SEM_CONTROL, O_RDWR, (void **)&(user_data->data_control), &(user_data->data_sem_control)) != 0)
     {
-        log_error("Failed to map control shared memory and associated semaphore");
+        log_error("Failed to map control shared memory for control and associated semaphore");
         return NULL;
     }
 
     if (shmem_map(TCO_SHMEM_NAME_STATE, TCO_SHMEM_SIZE_STATE, TCO_SHMEM_NAME_SEM_STATE, O_RDWR, (void **)&(user_data->data_state), &(user_data->data_sem_state)) != 0)
     {
-        log_error("Failed to map state shared memory and associated semaphore");
+        log_error("Failed to map state shared memory for state and associated semaphore");
+        return NULL;
+    }
+
+    if (shmem_map(TCO_SHMEM_NAME_SENSOR, TCO_SHMEM_SIZE_SENSOR, TCO_SHMEM_NAME_SEM_SENSOR, O_RDWR, (void **)&(user_data->data_sensor), &(user_data->data_sem_sensor)) != 0)
+    {
+        log_error("Failed to map state shared memory for sensor and associated semaphore");
         return NULL;
     }
 
@@ -77,6 +85,10 @@ void shmem_destructor(godot_object *p_instance, void *p_method_data, void *p_use
     if (sem_close(user_data->data_sem_state) != 0)
     {
         log_error("Failed to close semaphor for state shmem");
+    }
+    if (sem_close(user_data->data_sem_sensor) != 0)
+    {
+        log_error("Failed to close semaphor for sensor shmem");
     }
 
     log_debug("Libshmemaccess deconstructed");
@@ -166,7 +178,7 @@ godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data, vo
         return ret_failure;
     }
 
-    if (p_num_args != 5)
+    if (p_num_args != 6)
     {
         log_error("Incorrect arg count to write to state shmem. %d given, needed exactly 5", p_num_args);
         api->godot_variant_destroy(&ret_success);
@@ -207,6 +219,7 @@ godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data, vo
     /* Transform variants to C types */
     const uint8_t *wheels_off_track = api->godot_pool_byte_array_read_access_ptr(wheels_off_track_godot_arr_access);
     const uint8_t drifting = (uint8_t)api->godot_variant_as_int(p_args[1]);
+
     const float speed = (float)api->godot_variant_as_real(p_args[2]);
     const float pos[3] = {
         api->godot_vector3_get_axis(&pos_godot, GODOT_VECTOR3_AXIS_X),
@@ -241,6 +254,24 @@ godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data, vo
     memcpy(user_data->data_state, &data_state_cpy, TCO_SHMEM_SIZE_STATE);
     /* END: Critical section */
     if (sem_post(user_data->data_sem_state) == -1)
+    {
+        log_error("sem_post: %s", strerror(errno));
+        api->godot_variant_destroy(&ret_success);
+        return ret_failure;
+    }
+
+    const double rpm = (double)api->godot_variant_as_real(p_args[5]);
+    if (sem_wait(user_data->data_sem_sensor) == -1)
+    {
+        log_error("sem_wait: %s", strerror(errno));
+        api->godot_variant_destroy(&ret_success);
+        return ret_failure;
+    }
+    /* START: Critical section */
+    user_data->data_sensor->hall_effect_rpm = rpm;
+    user_data->data_sensor->time_step++;
+    /* END: Critical section */
+    if (sem_post(user_data->data_sem_sensor) == -1)
     {
         log_error("sem_post: %s", strerror(errno));
         api->godot_variant_destroy(&ret_success);

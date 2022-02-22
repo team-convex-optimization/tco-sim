@@ -11,7 +11,7 @@ const mode_training = true
 const stepping = false 
 # true means that the sim will use controls from the control shmem to drive. 
 # All manual controls will be disabled.
-const remote_control = false
+const remote_control = true
 const time_step_length = 1.0/30.0 # seconds
 const time_reset_settle = 1.0 # seconds
 # Used to step and reset
@@ -49,7 +49,7 @@ const servo_frac_per_sec = 8.72664626 # ((60 degrees) / (0.08 seconds)) * ((60 d
 var motor_v = 0
 var motor_frac = 0
 var steer_frac = 0
-const steer_angle_max = 28 # degrees
+const steer_angle_max = 40 # degrees
 const steer_frac_max = steer_angle_max / 90.0
 var shmem_access = null
 var shmem_accessible = false
@@ -185,10 +185,13 @@ func shmem_update():
 			int(node_wheel_fr.get_skidinfo()) || 
 			int(node_wheel_rl.get_skidinfo()) || 
 			int(node_wheel_rr.get_skidinfo()))
-		
+
 		# Compute length of velocity vector perpendicular to forward direction of the car
 		var speed = -get_transform().basis.xform_inv(get_linear_velocity()).z / 100 # in meters/second
-		
+
+		# Compute the avg RPM of wheels
+		var rpm = (node_wheel_fl.get_rpm() + node_wheel_fr.get_rpm() + node_wheel_rl.get_rpm() + node_wheel_rr.get_rpm())/4
+
 		# Global positon of the car
 		var pos = get_transform().origin
 		
@@ -197,7 +200,7 @@ func shmem_update():
 		video.convert(Image.FORMAT_L8) # To grayscale
 		video = video.get_data() # Convert image to a pool byte array
 		
-		shmem_access.data_write(wheels_off_track, drifting, speed, pos, video)
+		shmem_access.data_write(wheels_off_track, drifting, speed, pos, video, rpm)
 
 func _physics_process(delta):
 	if not resetting:

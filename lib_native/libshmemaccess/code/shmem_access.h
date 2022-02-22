@@ -51,7 +51,8 @@ godot_variant shmem_data_read(godot_object *p_instance, void *p_method_data, voi
  *     [1] = drifting
  *     [2] = speed
  *     [3] = pos[3]
- *     [4] = video[18][32]
+ *     [4] = video[480][640]
+ *     [5] = rpm
  * @return Godot variant 0 on success and -1 on failure
  */
 godot_variant shmem_data_write(godot_object *p_instance, void *p_method_data, void *p_user_data,
