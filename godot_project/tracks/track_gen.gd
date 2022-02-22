@@ -6,7 +6,7 @@ extends Spatial
 # 2019 fianls track:
 #const track_desc = "ssllsssllseiesrrsrrllrrsrrrrllseierrsssrrllssssseiesllssrrssrrsecssrrsssrrllrrsiesssllsllrrscsrrllss"
 # 2019 qualifiers track:
-const track_desc = "scsrreessssrrssrrrrllllsiesllllslleisllrrrr"
+const track_desc = "scsrreessfsrrssrrrrllllsiesllllslleisllrrrr"
 
 # Offset in format [x,z,deg]
 const offsets = {
@@ -15,7 +15,8 @@ const offsets = {
 	'r':[1.3034237,-3.1465890,-45], 
 	'i':[0,-5.5,0], 
 	'e':[0,-1.7,0], 
-	'c':[0,-14.4,0]
+	'c':[0,-14.4,0],
+	'f':[0,-7.2,0],
 }
 const pieces = {
 	's':preload("res://tracks/pieces/straight.tscn"), 
@@ -23,7 +24,8 @@ const pieces = {
 	'r':preload("res://tracks/pieces/curve_right.tscn"), 
 	'i':preload("res://tracks/pieces/intersection_center.tscn"), 
 	'e':preload("res://tracks/pieces/intersection_extension.tscn"), 
-	'c':preload("res://tracks/pieces/chicane.tscn")
+	'c':preload("res://tracks/pieces/chicane.tscn"),
+	'f':preload("res://tracks/pieces/finish.tscn")
 }
 
 func _ready():
