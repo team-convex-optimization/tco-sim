@@ -11,7 +11,7 @@ const mode_training = true
 const stepping = false 
 # true means that the sim will use controls from the control shmem to drive. 
 # All manual controls will be disabled.
-const remote_control = true
+const remote_control = false
 const time_step_length = 1.0/30.0 # seconds
 const time_reset_settle = 1.0 # seconds
 # Used to step and reset
@@ -28,7 +28,7 @@ const motor_frequency = 8 #hz
 const motor_inductance =  0.0046 #henry
 const motor_resistance = 2 * 3.14 * motor_frequency * motor_inductance
 const motor_breaking_idle = 0.00246 # The deceleration when no power is given to motors TODO: MEASURE ME
-const motor_throttle_max = 0.4 # only applies to human input
+const motor_throttle_max = 0.75 # only applies to human input
 
 func get_motor_current(voltage, resistance):
 	return voltage / resistance
@@ -54,6 +54,10 @@ const steer_frac_max = steer_angle_max / 90.0
 var shmem_access = null
 var shmem_accessible = false
 
+var brake_frac = 0
+var motor_brake_idle = 0.002
+var motor_brake_max = 0.007
+
 # References to nodes
 onready var node_wheel_fl = get_node("CarWheelFL")
 onready var node_wheel_fr = get_node("CarWheelFR")
@@ -66,7 +70,7 @@ func car_reset():
 
 func input_get():
 	steer_frac = 0
-	motor_frac = 0
+	motor_frac = 0.5
 	if Input.is_action_pressed("steer_left"):
 		steer_frac += -1
 	if Input.is_action_pressed("steer_right"):
@@ -75,7 +79,7 @@ func input_get():
 	if Input.is_action_pressed("accelerate"):
 		motor_frac = 1
 	if Input.is_action_pressed("decelerate"):
-		motor_frac -= 1
+		motor_frac = 0
 		
 	if Input.is_action_pressed("joy_steer_left"):
 		steer_frac += -Input.get_action_strength("joy_steer_left")
@@ -85,9 +89,9 @@ func input_get():
 		steer_frac = 0
 		
 	if Input.is_action_pressed("joy_accelerate"):
-		motor_frac = Input.get_action_strength("joy_accelerate")
+		motor_frac = (Input.get_action_strength("joy_accelerate")/2) + 0.5
 	if Input.is_action_pressed("joy_deccelerate"):
-		motor_frac -= Input.get_action_strength("joy_deccelerate")
+		motor_frac -= (Input.get_action_strength("joy_deccelerate")/2) + 0.5
 		
 	steer_frac = -clamp(steer_frac, -steer_frac_max, steer_frac_max)
 	motor_frac = clamp(motor_frac, -1, 1)
@@ -113,6 +117,7 @@ func input_get_shmem():
 		shmem_accessible = false
 		steer_frac = 0
 		motor_frac = 0
+		brake_frac = 0
 	
 	if motor_frac == 0:
 		motor_v = 0
@@ -203,12 +208,21 @@ func shmem_update():
 		shmem_access.data_write(wheels_off_track, drifting, speed, pos, video, rpm)
 
 func _physics_process(delta):
+	var brake_frac = 0
 	if not resetting:
 		var steer_frac_old = steer_frac
 		if mode_training and remote_control and (OS.get_name() == "X11"):
 			input_get_shmem()
 		else:
 			input_get()
+		print(motor_frac)
+		if motor_frac > 0.5:
+			motor_v = ((motor_frac - 0.5) * 2 * motor_throttle_max)
+			motor_v *= motor_v_max
+			brake_frac = 0
+		else:
+			motor_v = 0
+			brake_frac = (abs(motor_frac - 0.5) * 2 * (motor_brake_max - motor_brake_idle)) + motor_brake_idle
 		
 		var amp = get_motor_current(motor_v, motor_resistance)
 		var torque = get_motor_torque(amp, motor_kv)
@@ -222,6 +236,7 @@ func _physics_process(delta):
 			
 		set_steering(steer_frac)
 		set_engine_force((torque/0.0325)/1.8) # Force is (torque/moment)
+		set_brake(brake_frac)
 	else:
 		set_steering(0.0)
 		set_engine_force(0.0)
