@@ -6,17 +6,13 @@ var _prev_error: float = 0.0
 var _integral: float = 0.0
 var _int_max = 200
 export var _Kp: float = 0.01
-export var _Ki: float = 2
+export var _Ki: float = 0
 export var _Kd: float = 0
-export var _dt = 0.01
-
-var IterationTimer = null
 
 func _ready():
-	IterationTimer = Timer.new() # create a new timer object
-	IterationTimer.set_wait_time(_dt)
+	pass
 
-func calculate(setpoint, pv):
+func calculate(setpoint, pv, _dt):
 	var error = setpoint - pv
 	var Pout = _Kp * error
 	
@@ -35,14 +31,5 @@ func calculate(setpoint, pv):
 	_prev_error = error
 	return output
 
-func _on_start_timer():
-	IterationTimer.start()
-
-func _on_stop_timer():
-	IterationTimer.stop()
-
 func reset_integral():
 	_integral = 0.0
-
-func get_timer():
-	return IterationTimer

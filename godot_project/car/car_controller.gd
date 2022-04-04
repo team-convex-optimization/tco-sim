@@ -5,7 +5,7 @@ extends VehicleBody
 # linux hence the checks for 'OS.get_name() == "X11"'
 
 # true means that the sim connects to training shmem and writes its state there.
-const mode_training = true
+const mode_training = false
 # true means that the sim will step "time_step_length" then wait for the shmem 
 # state variable to change to 1 which causes the sim to step again.
 const stepping = false 
@@ -28,7 +28,10 @@ const motor_frequency = 8 #hz
 const motor_inductance =  0.0046 #henry
 const motor_resistance = 2 * 3.14 * motor_frequency * motor_inductance
 const motor_breaking_idle = 0.00246 # The deceleration when no power is given to motors TODO: MEASURE ME
-const motor_throttle_max = 0.75 # only applies to human input
+const motor_throttle_max = 1.0 # only applies to human input
+
+const MAXRPM = 2700 # Max RPM
+var   motor_pid = null # Intantiated on _ready
 
 func get_motor_current(voltage, resistance):
 	return voltage / resistance
@@ -125,6 +128,11 @@ func input_get_shmem():
 		motor_v = ((motor_frac - 0.5) * 2.0) * motor_v_max
 
 func _ready():
+	motor_pid = PID_Controller.new()
+	motor_pid._Kp = 0.0
+	motor_pid._Ki = 0.0
+	motor_pid._Kd = 0.0
+	
 	set_brake(motor_breaking_idle)
 	reset_transform = get_global_transform()
 	
@@ -207,6 +215,16 @@ func shmem_update():
 		
 		shmem_access.data_write(wheels_off_track, drifting, speed, pos, video, rpm)
 
+func calculate_motor_output(motor_frac, delta):
+	motor_frac = (motor_frac - 0.5) * 2 # Normalize from 0 to 1 for good measurement of desired_rpm
+	# calc current rpm from avg(rpm)
+	var curr_rpm = (node_wheel_fl.get_rpm() + node_wheel_fr.get_rpm() + node_wheel_rl.get_rpm() + node_wheel_rr.get_rpm())/4
+	# calc desired rpm from RPM_MAX *motor_frac
+	var desired_rpm = motor_frac * MAXRPM
+	# call PID with desired RPM, current RPM and time difference
+	var throttle = motor_pid.calculate(desired_rpm, curr_rpm, delta)
+	return throttle
+	
 func _physics_process(delta):
 	var brake_frac = 0
 	if not resetting:
@@ -215,7 +233,7 @@ func _physics_process(delta):
 			input_get_shmem()
 		else:
 			input_get()
-		print(motor_frac)
+		# print(motor_frac)
 		if motor_frac > 0.5:
 			motor_v = ((motor_frac - 0.5) * 2 * motor_throttle_max)
 			motor_v *= motor_v_max
@@ -234,8 +252,9 @@ func _physics_process(delta):
 		else:
 			steer_frac = clamp(steer_frac_old - servo_frac_delta, -steer_frac_max, steer_frac_max)
 			
+		set_engine_force(calculate_motor_output(motor_frac, delta))
 		set_steering(steer_frac)
-		set_engine_force((torque/0.0325)/1.8) # Force is (torque/moment)
+		# set_engine_force((torque/0.0325)/1.8) # Force is (torque/moment)
 		set_brake(brake_frac)
 	else:
 		set_steering(0.0)
