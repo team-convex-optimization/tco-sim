@@ -8,9 +8,14 @@
 
 config_version=4
 
-_global_script_classes=[  ]
+_global_script_classes=[ {
+"base": "Node",
+"class": "PID_Controller",
+"language": "GDScript",
+"path": "res://addons/PIDController/PIDLogic.gd"
+} ]
 _global_script_class_icons={
-
+"PID_Controller": ""
 }
 
 [application]
@@ -31,6 +36,10 @@ window/size/height=480
 window/size/resizable=false
 window/vsync/use_vsync=false
 window/stretch/aspect="keep"
+
+[editor_plugins]
+
+enabled=PoolStringArray( "PIDController" )
 
 [gdnative]
 
