@@ -29,11 +29,6 @@ const MAXRPM = 1000 # Max RPM
 var   motor_pid = null # Intantiated on _ready
 
 # Servo motor constants
-# TODO: Ackerman steering
-const servo_speed = 0.08 #sec/60deg @ 6V (so it takes 0.04 seconds to full steer)
-const servo_torque = 9.3 #kgcm @ 6V
-const servo_max_voltage = 6
-const servo_weight = 0.045 #kg
 const servo_frac_per_sec = 8.72664626 # ((60 degrees) / (0.08 seconds)) * ((60 degrees) / (90 degrees)) 
 
 # State vars
