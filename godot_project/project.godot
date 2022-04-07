@@ -39,7 +39,7 @@ window/stretch/aspect="keep"
 
 [editor_plugins]
 
-enabled=PoolStringArray( "res://addons/PIDController/plugin.cfg" )
+enabled=PoolStringArray(  )
 
 [gdnative]
 
@@ -84,6 +84,7 @@ joy_steer_left={
 joy_accelerate={
 "deadzone": 0.0,
 "events": [ Object(InputEventJoypadMotion,"resource_local_to_scene":false,"resource_name":"","device":0,"axis":7,"axis_value":1.0,"script":null)
+, Object(InputEventJoypadMotion,"resource_local_to_scene":false,"resource_name":"","device":-1,"axis":7,"axis_value":1.0,"script":null)
  ]
 }
 joy_deccelerate={
@@ -112,9 +113,9 @@ common/enable_object_picking=false
 
 [rendering]
 
+quality/filters/anisotropic_filter_level=16
 quality/shadows/filter_mode=2
 quality/depth_prepass/enable=false
-quality/filters/anisotropic_filter_level=16
 quality/subsurface_scattering/quality=0
 quality/subsurface_scattering/weight_samples=false
 quality/filters/msaa=4

@@ -5,13 +5,13 @@ extends VehicleBody
 # linux hence the checks for 'OS.get_name() == "X11"'
 
 # true means that the sim connects to training shmem and writes its state there.
-const mode_training = true
+const mode_training = false
 # true means that the sim will step "time_step_length" then wait for the shmem 
 # state variable to change to 1 which causes the sim to step again.
 const stepping = false 
 # true means that the sim will use controls from the control shmem to drive. 
 # All manual controls will be disabled.
-const remote_control = true
+const remote_control = false
 const time_step_length = 1.0/30.0 # seconds
 const time_reset_settle = 1.0 # seconds
 # Used to step and reset
@@ -20,17 +20,10 @@ var resetting = false
 var reset_transform
 
 # Motor constants and methods
-const motor_kv =  2270 #rpm/V
-const motor_v_max = 7.4
-const motor_amp_max = 28
-const motor_weight = 0.178 #kg
-const motor_frequency = 8 #hz
-const motor_inductance =  0.0046 #henry
-const motor_resistance = 2 * 3.14 * motor_frequency * motor_inductance
-const motor_breaking_idle = 0.00246 # The deceleration when no power is given to motors TODO: MEASURE ME
+const motor_braking_idle = 0.00246 # The deceleration when no power is given to motors TODO: MEASURE ME
 const motor_throttle_max = 1.0 # only applies to human input
 const max_acceleration = 1.65 # Upper bound for the PID
-const max_deceleration = -2.0
+const max_deceleration = -2.0 # Lower bound for the PID
 
 const MAXRPM = 1000 # Max RPM
 var   motor_pid = null # Intantiated on _ready
@@ -44,7 +37,6 @@ const servo_weight = 0.045 #kg
 const servo_frac_per_sec = 8.72664626 # ((60 degrees) / (0.08 seconds)) * ((60 degrees) / (90 degrees)) 
 
 # State vars
-var motor_v = 0
 var motor_frac = 0
 var steer_frac = 0
 const steer_angle_max = 40 # degrees
@@ -53,7 +45,6 @@ var shmem_access = null
 var shmem_accessible = false
 
 var brake_frac = 0
-var motor_brake_idle = 0.002
 var motor_brake_max = 0.007
 
 # References to nodes
@@ -94,10 +85,6 @@ func input_get():
 	steer_frac = -clamp(steer_frac, -steer_frac_max, steer_frac_max)
 	motor_frac = clamp(motor_frac, -1, 1)
 	motor_frac *= motor_throttle_max
-	if abs(motor_frac) < 0.01:
-		motor_v = 0
-	else:
-		motor_v = motor_frac * motor_v_max
 
 func input_get_shmem():
 	var dat = shmem_access.data_read()
@@ -116,17 +103,12 @@ func input_get_shmem():
 		steer_frac = 0
 		motor_frac = 0
 		brake_frac = 0
-	
-	if motor_frac == 0:
-		motor_v = 0
-	else:
-		motor_v = ((motor_frac - 0.5) * 2.0) * motor_v_max
 
 func _ready():
 	motor_pid = PID_Controller.new()
 	motor_pid.set_pid_values(0.00625, 0.005, 0.0)
 	
-	set_brake(motor_breaking_idle)
+	set_brake(motor_braking_idle)
 	reset_transform = get_global_transform()
 	
 	if mode_training and OS.get_name() == "X11":
@@ -216,7 +198,7 @@ func calculate_motor_output(_motor_frac, delta):
 	var curr_rpm = (node_wheel_fl.get_rpm() + node_wheel_fr.get_rpm() + node_wheel_rl.get_rpm() + node_wheel_rr.get_rpm()) /  4
 	# calc desired rpm from RPM_MAX * _motor_frac
 	var desired_rpm = _motor_frac * MAXRPM
-	# call PID with desired RPM, current RPM and time difference
+	# call PID with desired RPM, current RPM and time difference and clamp output to boundaries
 	var throttle = clamp(motor_pid.calculate(desired_rpm, curr_rpm, delta), max_deceleration, max_acceleration)
 	return throttle
 
@@ -229,12 +211,9 @@ func _physics_process(delta):
 		else:
 			input_get()
 		if motor_frac > 0.5:
-			motor_v = ((motor_frac - 0.5) * 2 * motor_throttle_max)
-			motor_v *= motor_v_max
 			_brake_frac = 0
 		else:
-			motor_v = 0
-			_brake_frac = (abs(motor_frac - 0.5) * 2 * (motor_brake_max - motor_brake_idle)) + motor_brake_idle
+			_brake_frac = (abs(motor_frac - 0.5) * 2 * (motor_brake_max - motor_braking_idle)) + motor_braking_idle
 
 		# Enforce servo speed limit
 		var servo_frac_delta = servo_frac_per_sec * delta
