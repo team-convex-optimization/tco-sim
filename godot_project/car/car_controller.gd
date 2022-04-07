@@ -186,8 +186,6 @@ func shmem_update():
 		shmem_access.data_write(wheels_off_track, drifting, speed, pos, video, rpm)
 
 func calculate_motor_output(_motor_frac, delta):
-	if _motor_frac == 0.5:
-		return 0
 	_motor_frac = (_motor_frac - 0.5) * 2 # Normalize from 0 to 1 for good measurement of desired_rpm
 	# calc current rpm from avg(rpm)
 	var curr_rpm = (node_wheel_fl.get_rpm() + node_wheel_fr.get_rpm() + node_wheel_rl.get_rpm() + node_wheel_rr.get_rpm()) /  4
@@ -195,6 +193,10 @@ func calculate_motor_output(_motor_frac, delta):
 	var desired_rpm = _motor_frac * MAXRPM
 	# call PID with desired RPM, current RPM and time difference and clamp output to boundaries
 	var throttle = clamp(motor_pid.calculate(desired_rpm, curr_rpm, delta), max_deceleration, max_acceleration)
+	
+	# If we are given idle motor, PID still needs to know of this event, despite us forcing 0 throttle
+	if _motor_frac == 0.5: 
+		throttle = 0
 	return throttle
 
 func _physics_process(delta):
