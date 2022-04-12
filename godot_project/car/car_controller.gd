@@ -24,8 +24,8 @@ const motor_braking_idle = 0.00246 # The deceleration when no power is given to 
 const motor_throttle_max = 1.0 # only applies to human input
 const max_acceleration = 1.65 # Upper bound for the PID
 const max_deceleration = -2.0 # Lower bound for the PID
-
-const MAXRPM = 1000 # Max RPM
+const MIN_POWER_TO_MOVEMENT = 0.15 # Minimum amount of throttle needed to put the body into motion
+const MAXRPM = 1600 # Max RPM
 var   motor_pid = null # Intantiated on _ready
 
 # Servo motor constants
@@ -187,6 +187,9 @@ func shmem_update():
 
 func calculate_motor_output(_motor_frac, delta):
 	_motor_frac = (_motor_frac - 0.5) * 2 # Normalize from 0 to 1 for good measurement of desired_rpm
+	# Ensure that the car only starts with some non-perfect linear actuation
+	if (_motor_frac > 0.0):
+		_motor_frac -= min(MIN_POWER_TO_MOVEMENT, _motor_frac)
 	# calc current rpm from avg(rpm)
 	var curr_rpm = (node_wheel_fl.get_rpm() + node_wheel_fr.get_rpm() + node_wheel_rl.get_rpm() + node_wheel_rr.get_rpm()) /  4
 	# calc desired rpm from RPM_MAX * _motor_frac
@@ -195,7 +198,7 @@ func calculate_motor_output(_motor_frac, delta):
 	var throttle = clamp(motor_pid.calculate(desired_rpm, curr_rpm, delta), max_deceleration, max_acceleration)
 	
 	# If we are given idle motor, PID still needs to know of this event, despite us forcing 0 throttle
-	if _motor_frac == 0.5: 
+	if _motor_frac == 0.0: 
 		throttle = 0
 	return throttle
 
