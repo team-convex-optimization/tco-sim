@@ -805,8 +805,8 @@ material/0 = null
 [node name="Accessories" type="Spatial" parent="VehicleBody"]
 
 [node name="Camera" type="Camera" parent="VehicleBody/Accessories"]
-transform = Transform( -1, -2.49609e-07, 2.09447e-07, 0, 0.642788, 0.766045, -3.25841e-07, 0.766045, -0.642788, 0, 3.01989, -1.01459 )
-fov = 85.0
+transform = Transform( -1, 6.59789e-08, -5.73545e-08, 0, 0.656059, 0.75471, 8.74228e-08, 0.75471, -0.656059, 0, 3.01989, -1.01459 )
+fov = 65.0
 near = 0.1
 
 [node name="CarWheelFR" type="VehicleWheel" parent="VehicleBody"]
